@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Logs
+*.log
+
+# Mac OS files
+.DS_Store
+
+# PyCharm IDE
+.idea/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Selenium / pyppeteer downloads cache
+pyppeteer/
+
+# Python coverage reports
+htmlcov/
+.coverage
+
+# pytest cache
+.pytest_cache/
+
+# dotenv environment variables file
+.env
+
+# Others
+*.sqlite3
