@@ -35,20 +35,36 @@ class API(object):
         #     'Content-Type': 'application/json'}
 
     def __enter__(self):
-        # 日志初始化
-        # TODO 数据库读取本次调用的日志ID
-        code = "fengshao"
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler(f"auto_run_{code}.log", mode='w', encoding='utf-8'),
+                logging.FileHandler(f"{Config.LOG_FILENAME}.log", mode='w', encoding='utf-8'),
                 logging.StreamHandler()
             ]
         )
         logger = logging.getLogger(__name__)
 
-        logger.info("调用开始执行")
+        # 生成本次任务的唯一id
+        job_id = Utils.generate_id()
+
+        # 日志文件名称写入环境变量
+        try:
+            Utils.write_env(
+                [
+                    "LOG_FILENAME",
+                    "JOB_ID"
+                ],
+                [
+                    Config.LOG_FILENAME,
+                    job_id
+                ]
+            )
+        except Exception as e:
+            raise ValueError(f"写入GitHub ENV工作流文件失败：{e}")
+
+        logger.info("日志配置完成")
+        logger.info(f"本次任务ID：{job_id}")
         return self
 
     # 调用函数
@@ -140,11 +156,14 @@ class API(object):
 
 
 def entrance():
-    with API() as api:
-        api.logger.info("调用开始执行")
-        api.run()
-        local_time = time.strftime('%Y-%m-%d %H:%M:%S')
-        api.logger.info("执行完成，完成时间{}".format(local_time))
+    try:
+        with API() as api:
+            api.logger.info("调用开始执行")
+            api.run()
+            local_time = time.strftime('%Y-%m-%d %H:%M:%S')
+            api.logger.info("执行完成，完成时间{}".format(local_time))
+    except Exception as e:
+        logging.error(e)
 
 
 if __name__ == "__main__":

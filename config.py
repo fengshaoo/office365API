@@ -1,3 +1,4 @@
+import logging
 import os
 
 
@@ -6,14 +7,23 @@ class Config:
     配置类
     存放所有的配置项
     """
-
+    # 必配项目 -------------------------------------------------------
     CLIENT_ID = None                # Azure 应用 Client ID
     CLIENT_SECRET = None            # Azure 应用 Client Secret
     TENANT_ID = None                # Azure AD 租户 ID
     REFRESH_TOKEN = None            # OAuth2 刷新令牌
+
+    # 选配项目 -------------------------------------------------------
+    LOG_SERVER_URL = None           # 日志服务器连接属性
+    DATABASE_URL = None             # 数据库连接属性
+
+    # 信息发送配置
     USER_EMAIL = None               # 用于 sendMail 场景的目标邮箱
     TELEGRAM_TOKEN = None           # telegram 用户token
     TELEGRAM_CHAT_ID = None         # 消息群组id
+    TELEGRAM_MESSAGE_STATUS = True  # Telegram通知生效状态
+
+    LOG_FILENAME = "auto_run_office365" # 默认日志文件名称
 
     APP_NUM = 1                     # 操作账号数量（默认单账号模式）
     MIN_START_DELAY = 0             # 最小开始延迟时间（s）
@@ -25,7 +35,6 @@ class Config:
     REQUEST_TIMEOUT = 10            # 请求超时秒数
     MAX_RETRIES = 3                 # 最大重试次数
     BASE_BACKOFF = 5                # 基础退避
-    TELEGRAM_MESSAGE_STATUS = True  # 是否启用邮件通知
     # 微软校验用的重定向地址，与Azure应用配置保持一致
     REDIRECT_URI = "http://localhost:53682/"
     # 获取access_token的请求端点
@@ -120,6 +129,7 @@ class Config:
 
     @classmethod
     def load(cls):
+        # 必须配置项
         required_envs = [
             "CLIENT_ID",
             "CLIENT_SECRET",
@@ -131,10 +141,21 @@ class Config:
             val = os.getenv(key)
             if val is None:
                 raise ValueError(f"必要环境变量 `{key}` 缺失！")
-            setattr(cls, key, val)
+            setattr(cls, key, val)  # 反射设置字段值
+
+        # 选配字段设置
+        cls.LOG_SERVER_URL = os.getenv("LOG_SERVER_HOST", cls.LOG_SERVER_URL)
+        if cls.LOG_SERVER_URL is None:
+            logging.warning("未配置日志服务器，采用本地模式，该模式下无日志存档")
+        cls.DATABASE_URL = os.getenv("DATABASE_URL", cls.DATABASE_URL)
+        if cls.DATABASE_URL is None:
+            logging.warning("未配置数据库，本地模式")
+
         cls.APP_NUM = int(os.getenv("APP_NUM", cls.APP_NUM))
+        logging.info(f"启用账户数量：{cls.APP_NUM}")
         cls.ACCESS_TOKEN_LIST = [''] * int(cls.APP_NUM)
         cls.TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
         cls.TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
         if cls.TELEGRAM_TOKEN is None or cls.TELEGRAM_CHAT_ID is None:
             cls.TELEGRAM_MESSAGE_STATUS = False
+            logging.warning("未启用 Telegram 通知")
