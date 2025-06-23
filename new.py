@@ -1,11 +1,13 @@
 # -*- coding: UTF-8 -*-
-import requests
 import time
-import random
 import logging
+import pymysql
 
 from config import Config
 from utils import Utils
+from errorInfo import ErrorCode
+from errorInfo import BasicException
+from logger_config import setup_logger
 
 
 class Foo(object):
@@ -25,30 +27,25 @@ class Foo(object):
 
 class API(object):
 
-    # 数据初始化
     def __init__(self):
         super().__init__()
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.info("日志初始化配置完成")
 
-        # self.headers = {'Content-Type': 'application/x-www-form-urlencoded'
-        #                 }
-        # self.header_wechar = {
-        #     'Content-Type': 'application/json'}
 
     def __enter__(self):
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(f"{Config.LOG_FILENAME}.log", mode='w', encoding='utf-8'),
-                logging.StreamHandler()
-            ]
-        )
-        logger = logging.getLogger(__name__)
+        self.logger.info("加载环境变量")
+        try:
+            Config.load()
+        except Exception as e:
+            raise BasicException(ErrorCode.INIT_ENVIRONMENT_ERROR, extra=e)
 
         # 生成本次任务的唯一id
         job_id = Utils.generate_id()
+        self.logger.info(f"本次任务ID：{job_id}")
 
         # 日志文件名称写入环境变量
+        self.logger.info("配置写入 GITHUB_ENV 文件")
         try:
             Utils.write_env(
                 [
@@ -61,98 +58,66 @@ class API(object):
                 ]
             )
         except Exception as e:
-            raise ValueError(f"写入GitHub ENV工作流文件失败：{e}")
+            raise BasicException(ErrorCode.WRITE_FILE_ERROR, extra=e)
 
-        logger.info("日志配置完成")
-        logger.info(f"本次任务ID：{job_id}")
-        return self
-
-    # 调用函数
-    def runapi(self, apilist, a, c):
-        access_token = Config.ACCESS_TOKEN_LIST[a-1]
-        headers = {
-            'Authorization': access_token,
-            'Content-Type': 'application/json'
-        }
-        f1 = Foo()  # 实例化计数器
-        for a in range(len(apilist)):
+        # 配置日志服务器连接
+        if Config.LOG_SERVER_URL is None:
+            self.logger.warning("未配置日志服务器，采用本地模式，该模式下无日志存档")
+        else:
             try:
-                if requests.get(Config.API_LIST[apilist[a]], headers=headers).status_code == 200:
-                    print('第'+str(apilist[a])+"号api调用成功")
+                # 解析日志服务器url （user@host/file_path）
+                user, rest = Config.LOG_SERVER_URL.split('@', 1)
+                host, file_path = rest.split('/', 1)
+                Utils.write_env(
+                    [
+                        "LOG_SERVER_USER",
+                        "LOG_SERVER_HOST",
+                        "LOG_FILE_PATH"
+                    ],
+                    [
+                        user,
+                        host,
+                        file_path
+                    ]
+                )
+            except Exception as e:
+                raise BasicException(ErrorCode.WRITE_FILE_ERROR, extra=e)
 
-                    if Config.config_list['是否开启各api延时'] != 'N':
-                        time.sleep(random.randint(
-                            Config.config_list['api延时范围开始'], Config.config_list['api延时结束']))
-                else:
-                    print('第'+str(apilist[a])+"号api调用失败")
-                    if c == 1:  # 仅统计一轮错误次数
-                        f1.count = f1.count + 1
-            except:
-                print("pass")
-                pass
+        # 建立数据库连接
+        if Config.DATABASE_URL is None:
+            self.logger.warning("未配置数据库，采用本地模式")
+        else:
+            try:
+                # 解析数据库连接url （user:password@host:port/dbname）
+                user, rest = Config.DATABASE_URL.split(':', 1)
+                password, rest = rest.split('@', 1)
+                host_port, dbname = rest.split('/', 1)
+                host, port = host_port.split(':')
 
-
-    def fixlist(self):
-        # 随机api序列
-        fixed_api = [0, 1, 5, 6, 20, 21]
-        # 保证抽取到outlook,onedrive的api
-        ex_api = [2, 3, 4, 7, 8, 9, 10, 22, 23, 24, 25,
-                  26, 27, 13, 14, 15, 16, 17, 18, 19, 11, 12]
-        # 额外抽取填充的api
-        fixed_api.extend(random.sample(ex_api, 6))
-        random.shuffle(fixed_api)
-        return fixed_api
+                self.connection = pymysql.connect(
+                    host=host,
+                    port=port,
+                    user=user,
+                    password=password,
+                    database=dbname,
+                    charset='utf8mb4',
+                    cursorclass=pymysql.cursors.DictCursor
+                )
+            except Exception as e:
+                raise BasicException(ErrorCode.DATABASE_CONNECT_ERROR, extra=e)
+        return self
 
 
 
     def run(self):
-        # 实际运行
-        # 首先判断token是否都能够正常工作
-        run_time_temp = [0, 0, 0]  # hour minute second
-        if Utils.getaccess() == -1:
-            Utils.sendmessage(12, run_time_temp)
-            return
-        
-        #self.getaccess()
-        
-        begin_time = time.time()  # 统计时间开始
-        
-        print('共'+str(Config.config_list['每次轮数'])+'轮')
-        for c in range(1, Config.config_list['每次轮数']+1):
-            if Config.config_list['是否启动随机时间'] == 'Y':
-                time.sleep(random.randint(
-                    Config.config_list['延时范围起始'], Config.config_list['结束']))
-            for a in range(1, int(Config.APP_NUM)+1):
-                if Config.config_list['是否开启各账号延时'] == 'Y':
-                    time.sleep(random.randint(
-                        Config.config_list['账号延时范围开始'], Config.config_list['账号延时结束']))
-#                 if a == 1:
-                print('\n'+'应用/账号 '+str(a)+' 的第'+str(c)+'轮' +
-                      time.asctime(time.localtime(time.time()))+'\n')
-                if Config.config_list['是否开启随机api顺序'] == 'Y':
-                    print("已开启随机顺序,共12个api")
-                    apilist = self.fixlist()
-                    self.runapi(apilist, a, c)
-                else:
-                    print("原版顺序,共10个api")
-                    apilist = [5, 9, 8, 1, 20, 24, 23, 6, 21, 22]
-                    self.runapi(apilist, a, c)
+        pass
 
-        end_time = time.time()  # 统计时间结束
-        run_time = round(end_time-begin_time)
-        hour = run_time//3600
-        minute = (run_time-3600*hour)//60
-        second = run_time-3600*hour-60*minute
 
-        run_times = [hour ,minute,second]  # hour minute second 
-                       
-        f2 = Foo()
-        if f2.count != 0:
-            Utils.sendmessage(f2.count, run_times)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-        # TODO 记录日志并将日志文件传输到服务器
+        if self.connection:
+            self.connection.close()
+        return False
 
 
 def entrance():
@@ -167,4 +132,5 @@ def entrance():
 
 
 if __name__ == "__main__":
+    setup_logger()  # 日志初始化
     entrance()

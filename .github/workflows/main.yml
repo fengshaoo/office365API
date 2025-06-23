@@ -6,8 +6,8 @@ name: AutoRun
 on:
   release:
     types: [published]
-  schedule:
-    - cron: '0 8-18 * * 1-6'
+#  schedule:
+#    - cron: '0 8-18 * * 1-6'
 
 jobs:
   build:

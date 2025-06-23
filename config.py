@@ -12,6 +12,7 @@ class Config:
     CLIENT_SECRET = None            # Azure 应用 Client Secret
     TENANT_ID = None                # Azure AD 租户 ID
     REFRESH_TOKEN = None            # OAuth2 刷新令牌
+    # ---------------------------------------------------------------
 
     # 选配项目 -------------------------------------------------------
     LOG_SERVER_URL = None           # 日志服务器连接属性
@@ -22,6 +23,7 @@ class Config:
     TELEGRAM_TOKEN = None           # telegram 用户token
     TELEGRAM_CHAT_ID = None         # 消息群组id
     TELEGRAM_MESSAGE_STATUS = True  # Telegram通知生效状态
+    # ---------------------------------------------------------------
 
     LOG_FILENAME = "auto_run_office365" # 默认日志文件名称
 

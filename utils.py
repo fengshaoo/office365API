@@ -9,13 +9,15 @@ import logging
 import os
 
 from config import Config
+from errorInfo import ErrorCode
+from errorInfo import BasicException
+from logger_config import setup_logger
 
 
 class Utils:
     """
     工具类
     """
-
     @staticmethod
     def sendmessage(i, run_times):
         """
@@ -93,15 +95,18 @@ class Utils:
         connection = None
         # 检查是否配置数据库
         if Config.DATABASE_URL is None:
-            logging.warning("未配置数据库，采用本地模式")
+            logging.warning("未配置数据库，采用本地模式，无需执行后处理操作")
             logging.info("任务完成，正常退出")
             return
         # 检查job_id是否设置
         job_id = os.environ.get("JOB_ID")
         if job_id is None:
-            logging.error("数据库连接模式下 job_id 未找到，请检查主函数是否设置id或是否写入GITHUB_ENV文件")
-            return
+            raise BasicException(
+                ErrorCode.FIELD_MISSING,
+                extra="数据库连接模式下 job_id 未找到，请检查主函数是否设置id或是否写入GITHUB_ENV文件"
+            )
 
+        logging.info("开始执行任务后处理，状态写入数据库")
         try:
             # 解析数据库连接url （user:password@host:port/dbname）
             user, rest = Config.DATABASE_URL.split(':', 1)
@@ -124,7 +129,7 @@ class Utils:
                 connection.commit()
                 logging.info(f"成功更新 job_id={job_id} 的任务状态为 success")
         except Exception as e:
-            logging.error(f"更新数据库出错: {e}")
+            raise BasicException(ErrorCode.UPDATE_DATABASE_ERROR, extra=e)
         finally:
             if connection:
                 connection.close()
@@ -152,46 +157,38 @@ class Utils:
             for k, v in zip(keys, values):
                 f.write(f"{k}={v}\n")
 
-    # TODO 编写生成id方法
-    @staticmethod
-    def generate_id():
-
-        return 1
 
     @staticmethod
-    def parse_log_server():
-        # 检查是否配置数据库
-        if Config.LOG_SERVER_URL is None:
-            logging.warning("未配置日志服务器，采用本地模式")
-            return
+    def generate_id() -> str:
+        """
+        生成一个16位纯数字的 job_id：
+        - 前部分为去掉前两位年份的时间戳（毫秒级）
+        - 后部分为随机数字，补齐到16位
+        :return: 16位字符串形式的 job_id
+        """
+        # 获取当前毫秒级时间戳
+        timestamp_ms = int(time.time() * 1000)  # e.g. 20250623150302123
+        timestamp_str = str(timestamp_ms)[2:]  # 去掉前两位年份
 
-        try:
-            # 解析日志服务器url （user@host/file_path）
-            user, rest = Config.LOG_SERVER_URL.split('@', 1)
-            host, file_path = rest.split('/', 1)
-            Utils.write_env(
-                [
-                    "LOG_SERVER_USER",
-                    "LOG_SERVER_HOST",
-                    "LOG_FILE_PATH"
-                ],
-                [
-                    "user",
-                    "host",
-                    "file_path"
-                ]
-            )
-        except Exception as e:
-            logging.error(f"写入GitHub ENV工作流文件失败：{e}")
+        # 计算随机数长度
+        remaining_length = 16 - len(timestamp_str)
+        random_part = ''.join(random.choices('0123456789', k=remaining_length))
 
+        job_id = timestamp_str + random_part
+        return job_id[:16]
 
 
 
 if __name__ == "__main__":
+    setup_logger()
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', choices=["PostProcess", 'task2'], required=True, help='任务名称')
     args = parser.parse_args()
 
     # 任务全部完成的后处理
     if args.task == "PostProcess":
-        Utils.post_process()
+        try:
+            Utils.post_process()
+        except Exception as e:
+            logging.error(e)
+
