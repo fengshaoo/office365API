@@ -36,6 +36,9 @@ jobs:
         # 发送信息
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        # 持久化
+        LOG_SERVER_URL: ${{ secrets.LOG_SERVER_URL }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
       run: |
         : "${GH_TOKEN:?Environment variable GH_TOKEN is not set}"
         : "${MS_TOKEN:?Environment variable MS_TOKEN is not set}"
@@ -44,6 +47,7 @@ jobs:
         python new.py
 
     - name: Upload Log File to Server
+      continue-on-error: true
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       run: |
