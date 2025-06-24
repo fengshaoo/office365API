@@ -21,8 +21,7 @@ jobs:
     - name: Install python package
       run: |
         python -m pip install --upgrade pip
-        pip install requests
-        pip install pynacl
+        pip install -r requirements.txt
 
     - name: Run API
       env:
