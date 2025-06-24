@@ -11,6 +11,7 @@ from sqlalchemy import make_url, create_engine
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
+from dao.job_detail_service import JobDetailService
 from errorInfo import ErrorCode
 from errorInfo import BasicException
 from configuration.logger_config import setup_logger
@@ -96,7 +97,8 @@ class Utils:
         """
         connection = None
         # 检查是否配置数据库
-        if Config.DATABASE_URL is None:
+        database_url = os.getenv("DATABASE_URL")
+        if database_url is None:
             logging.warning("未配置数据库，采用本地模式，无需执行后处理操作")
             logging.info("任务完成，正常退出")
             return
@@ -110,20 +112,15 @@ class Utils:
 
         logging.info("开始执行任务后处理，状态写入数据库")
         try:
-            db_url = make_url(f"mysql+pymysql://{Config.DATABASE_URL}")
-            engine = create_engine(db_url, pool_pre_ping=True)
-            Session = sessionmaker(bind=engine)
-            session = Session()
-            with connection.cursor() as cursor:
-                sql = "UPDATE job_detail SET job_status=%s WHERE id=%s"
-                cursor.execute(sql, (1, job_id))
-                connection.commit()
-                logging.info(f"成功更新 job_id={job_id} 的任务状态为 success")
+            job_id = int(job_id)
+            job_detail_service = JobDetailService()
+            job_detail_service.post_db_process(job_id)
         except Exception as e:
             raise BasicException(ErrorCode.UPDATE_DATABASE_ERROR, extra=e)
         finally:
             if connection:
                 connection.close()
+        logging.info(f"后置处理已完成，更新 job_id={job_id} 的任务状态为 success")
 
     @staticmethod
     def write_env(keys, values):

@@ -66,6 +66,8 @@ jobs:
         mv ${LOG_FILENAME}.log ${LOG_FILENAME}_${LOG_DATE}.log
 
         scp ${LOG_FILENAME}_${LOG_DATE}.log "${LOG_SERVER_USER}@${LOG_SERVER_HOST}:${LOG_FILE_PATH}"
+        
+        echo "Log file uploaded successfully."
 
     - name: Post Process
       run: |

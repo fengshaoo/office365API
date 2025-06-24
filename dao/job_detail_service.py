@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from configuration.base_db_session import BaseDBSession
 from pojo.job_detail import JobDetail
 
@@ -25,3 +27,12 @@ class JobDetailService(BaseDBSession):
             job = session.query(JobDetail).filter(JobDetail.id == job_id).first()
             if job:
                 session.delete(job)
+
+    def post_db_process(self, job_id: int):
+        with self.get_session() as session:
+            job = session.query(JobDetail).filter(JobDetail.id == job_id).first()
+            if job:
+                job.job_status = 1
+                job.end_time = datetime.now()
+                job.process = "post_process"
+                job.status = "end"
