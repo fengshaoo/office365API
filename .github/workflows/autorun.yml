@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Shanghai
 #    只有当发起操作的人是这个仓库的拥有者时才会执行（防止 PR 滥用）
     if: github.event.repository.owner.id == github.event.sender.id
     steps:

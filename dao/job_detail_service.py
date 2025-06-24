@@ -16,11 +16,11 @@ class JobDetailService(BaseDBSession):
         with self.get_session() as session:
             session.add(job)
 
-    def update_status(self, job_id: int, status: str):
+    def update_process(self, job_id: int, process: str):
         with self.get_session() as session:
             job = session.query(JobDetail).filter(JobDetail.id == job_id).first()
             if job:
-                job.status = status
+                job.process = process
 
     def delete_job(self, job_id: int):
         with self.get_session() as session:

@@ -111,6 +111,7 @@ class API(object):
 
     def run(self):
         self.logger.info("--->成功执行到调用步骤<---")
+        self.job_detail_service.update_process("run_api")
 
 
 
