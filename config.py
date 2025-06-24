@@ -147,15 +147,15 @@ class Config:
             setattr(cls, key, val)  # 反射设置字段值
 
         # 选配字段设置
-        cls.LOG_SERVER_URL = os.getenv("LOG_SERVER_HOST", cls.LOG_SERVER_URL)
+        cls.LOG_SERVER_URL = os.getenv("LOG_SERVER_URL", cls.LOG_SERVER_URL)
         if cls.LOG_SERVER_URL is None:
             logging.warning("未配置日志服务器，采用本地模式，该模式下无日志存档")
         cls.DATABASE_URL = os.getenv("DATABASE_URL", cls.DATABASE_URL)
         if cls.DATABASE_URL is None:
             logging.warning("未配置数据库，本地模式")
 
-        cls.APP_NUM = int(os.getenv("APP_NUM", cls.APP_NUM))
-        logging.info(f"启用账户数量：{cls.APP_NUM}")
+        # cls.APP_NUM = int(os.getenv("APP_NUM", cls.APP_NUM))
+        # logging.info(f"启用账户数量：{cls.APP_NUM}")
         cls.ACCESS_TOKEN_LIST = [''] * int(cls.APP_NUM)
         cls.TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
         cls.TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
