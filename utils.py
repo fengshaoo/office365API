@@ -4,14 +4,16 @@ import copy
 import json
 import time
 import random
-import pymysql
 import logging
 import os
+
+from sqlalchemy import make_url, create_engine
+from sqlalchemy.orm import sessionmaker
 
 from config import Config
 from errorInfo import ErrorCode
 from errorInfo import BasicException
-from logger_config import setup_logger
+from configuration.logger_config import setup_logger
 
 
 class Utils:
@@ -88,7 +90,7 @@ class Utils:
                 return -1
 
     @staticmethod
-    def post_process():
+    def post_process() -> None:
         """
         连接 MySQL 数据库，完成任务的后处理操作
         """
@@ -108,21 +110,10 @@ class Utils:
 
         logging.info("开始执行任务后处理，状态写入数据库")
         try:
-            # 解析数据库连接url （user:password@host:port/dbname）
-            user, rest = Config.DATABASE_URL.split(':', 1)
-            password, rest = rest.split('@', 1)
-            host_port, dbname = rest.split('/', 1)
-            host, port = host_port.split(':')
-
-            connection = pymysql.connect(
-                host=host,
-                port=port,
-                user=user,
-                password=password,
-                database=dbname,
-                charset='utf8mb4',
-                cursorclass=pymysql.cursors.DictCursor
-            )
+            db_url = make_url(f"mysql+pymysql://{Config.DATABASE_URL}")
+            engine = create_engine(db_url, pool_pre_ping=True)
+            Session = sessionmaker(bind=engine)
+            session = Session()
             with connection.cursor() as cursor:
                 sql = "UPDATE job_detail SET job_status=%s WHERE id=%s"
                 cursor.execute(sql, (1, job_id))

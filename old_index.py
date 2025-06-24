@@ -145,7 +145,7 @@ class api(object):
             "content": "Office365API调用存在失败情况，\n失败个数为{}，成功个数为{}。\n调用结束时间为{}。\n若非本人操作请尽快登录GitHub服务器进行查看管理。\nGitHub管理链接如下。".format(i, a, local_time),
             "summary": config_list['summary'],
             "contentType": int(config_list['contentType']),
-            # "topicIds": config['topicIds'],
+            # "topicIds": configuration['topicIds'],
             "uids": [os.getenv("UID")],
             "url": os.getenv("url")
         }

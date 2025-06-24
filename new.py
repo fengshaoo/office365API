@@ -1,13 +1,15 @@
 # -*- coding: UTF-8 -*-
 import time
 import logging
-import pymysql
+from datetime import datetime
 
 from config import Config
+from dao.job_detail_service import JobDetailService
+from pojo.job_detail import JobDetail
 from utils import Utils
 from errorInfo import ErrorCode
 from errorInfo import BasicException
-from logger_config import setup_logger
+from configuration.logger_config import setup_logger
 
 
 class Foo(object):
@@ -60,12 +62,12 @@ class API(object):
         except Exception as e:
             raise BasicException(ErrorCode.WRITE_FILE_ERROR, extra=e)
 
-        # 配置日志服务器连接
+        # 配置日志服务器连接变量
         if Config.LOG_SERVER_URL is None:
             self.logger.warning("未配置日志服务器，采用本地模式，该模式下无日志存档")
         else:
             try:
-                # 解析日志服务器url （user@host/file_path）
+                # 解析日志服务器url
                 user, rest = Config.LOG_SERVER_URL.split('@', 1)
                 host, file_path = rest.split('/', 1)
                 Utils.write_env(
@@ -88,36 +90,32 @@ class API(object):
             self.logger.warning("未配置数据库，采用本地模式")
         else:
             try:
-                # 解析数据库连接url （user:password@host:port/dbname）
-                user, rest = Config.DATABASE_URL.split(':', 1)
-                password, rest = rest.split('@', 1)
-                host_port, dbname = rest.split('/', 1)
-                host, port = host_port.split(':')
-
-                self.connection = pymysql.connect(
-                    host=host,
-                    port=port,
-                    user=user,
-                    password=password,
-                    database=dbname,
-                    charset='utf8mb4',
-                    cursorclass=pymysql.cursors.DictCursor
-                )
+                self.job_detail_service = JobDetailService()
             except Exception as e:
                 raise BasicException(ErrorCode.DATABASE_CONNECT_ERROR, extra=e)
+
+            # 初始化本次任务的数据库
+            new_job = JobDetail(
+                id = job_id,
+                start_time = datetime.now(),
+                end_time = None,
+                process = 'init',
+                status = 'running',
+                job_status = 0
+            )
+            self.job_detail_service.create_job(new_job)
+            self.logger.info("数据库初始化完成")
         return self
 
 
 
     def run(self):
-        pass
+        self.logger.info("--->成功执行到调用步骤<---")
 
 
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.connection:
-            self.connection.close()
-        return False
+        pass
 
 
 def entrance():

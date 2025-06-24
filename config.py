@@ -10,13 +10,14 @@ class Config:
     # 必配项目 -------------------------------------------------------
     CLIENT_ID = None                # Azure 应用 Client ID
     CLIENT_SECRET = None            # Azure 应用 Client Secret
-    TENANT_ID = None                # Azure AD 租户 ID
+    # TENANT_ID = None                # Azure AD 租户 ID
     REFRESH_TOKEN = None            # OAuth2 刷新令牌
+    GH_TOKEN = None                 # GitHub token
     # ---------------------------------------------------------------
 
     # 选配项目 -------------------------------------------------------
-    LOG_SERVER_URL = None           # 日志服务器连接属性
-    DATABASE_URL = None             # 数据库连接属性
+    LOG_SERVER_URL = None           # 日志服务器连接属性,格式:user@host/file_path
+    DATABASE_URL = None             # 数据库连接属性,格式:user:password@host:port/dbname
 
     # 信息发送配置
     USER_EMAIL = None               # 用于 sendMail 场景的目标邮箱
@@ -135,8 +136,9 @@ class Config:
         required_envs = [
             "CLIENT_ID",
             "CLIENT_SECRET",
-            "TENANT_ID",
+            # "TENANT_ID",
             "REFRESH_TOKEN",
+            "GH_TOKEN",
             "USER_EMAIL"
         ]
         for key in required_envs:
@@ -161,3 +163,5 @@ class Config:
         if cls.TELEGRAM_TOKEN is None or cls.TELEGRAM_CHAT_ID is None:
             cls.TELEGRAM_MESSAGE_STATUS = False
             logging.warning("未启用 Telegram 通知")
+            if cls.USER_EMAIL is None:
+                raise ValueError("无法启用通知功能，Tel & Email 均未配置")
