@@ -5,8 +5,8 @@ from pojo.job_detail import JobDetail
 
 
 class JobDetailService(BaseDBSession):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, database_url: str = None):
+        super().__init__(database_url)
 
     def get_by_id(self, job_id: int):
         with self.get_session() as session:

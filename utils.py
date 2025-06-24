@@ -112,7 +112,7 @@ class Utils:
         logging.info("开始执行任务后处理，状态写入数据库")
         try:
             job_id = int(job_id)
-            job_detail_service = JobDetailService()
+            job_detail_service = JobDetailService(database_url)
             job_detail_service.post_db_process(job_id)
         except Exception as e:
             raise BasicException(ErrorCode.UPDATE_DATABASE_ERROR, extra=e)
