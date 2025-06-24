@@ -159,6 +159,7 @@ class Config:
         cls.ACCESS_TOKEN_LIST = [''] * int(cls.APP_NUM)
         cls.TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
         cls.TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+        cls.USER_EMAIL = os.getenv("USER_EMAIL")
         if cls.TELEGRAM_TOKEN is None or cls.TELEGRAM_CHAT_ID is None:
             cls.TELEGRAM_MESSAGE_STATUS = False
             logging.warning("未启用 Telegram 通知")
