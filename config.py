@@ -29,6 +29,7 @@ class Config:
     LOG_FILENAME = "auto_run_office365" # 默认日志文件名称
 
     APP_NUM = 1                     # 操作账号数量（默认单账号模式）
+    ENABLE_NUM = -1                 # 启用账号数量（默认-1表示全部启用）
     MIN_START_DELAY = 0             # 最小开始延迟时间（s）
     MAX_START_DELAY = 300           # 最大开始延迟时间（s）
     REQUEST_DELAY_MIN = 1           # 最小请求延迟时间（s）
@@ -73,7 +74,9 @@ class Config:
     }
 
     # 账号列表
-    ACCESS_TOKEN_LIST = []
+    USER_TOKEN_DICT = {
+        "MS_TOKEN": ""
+    }
 
 
     # TODO 下列配置列表后续改为数据库查询
@@ -146,6 +149,22 @@ class Config:
                 raise ValueError(f"必要环境变量 `{key}` 缺失！")
             setattr(cls, key, val)  # 反射设置字段值
 
+        # 账号相关配置
+        cls.APP_NUM = int(os.getenv("APP_NUM", cls.APP_NUM))
+        if cls.APP_NUM == 1:
+            logging.info("单账号模式")
+        if cls.ENABLE_NUM != -1 and cls.ENABLE_NUM > cls.APP_NUM:
+            raise ValueError("启用账号数(ENABLE_NUM)超出所配置的账号总数(APP_NUM)，请检查配置项并重新启动")
+        cls.USER_TOKEN_DICT["MS_TOKEN"] = cls.MS_TOKEN
+        for i in range(1, cls.APP_NUM):
+            key = f"MS_TOKEN_{i:02d}"
+            token = os.getenv(key)
+            if token is None:
+                raise ValueError(f"环境变量 `{key}` 缺失或账号数量(APP_NUM)配置错误，请检查配置项并重新启动，当前 APP_NUM = {cls.APP_NUM}")
+            cls.USER_TOKEN_DICT[key] = token
+
+        # TODO 后续配合多线程，为每个账号分配一个线程进行调用，带有延迟时间，防止同一时间大量账号同时启动
+
         # 选配字段设置
         cls.LOG_SERVER_URL = os.getenv("LOG_SERVER_URL", cls.LOG_SERVER_URL)
         if cls.LOG_SERVER_URL is None:
@@ -154,9 +173,6 @@ class Config:
         if cls.DATABASE_URL is None:
             logging.warning("未配置数据库，本地模式")
 
-        # cls.APP_NUM = int(os.getenv("APP_NUM", cls.APP_NUM))
-        # logging.info(f"启用账户数量：{cls.APP_NUM}")
-        cls.ACCESS_TOKEN_LIST = [''] * int(cls.APP_NUM)
         cls.TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
         cls.TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
         cls.USER_EMAIL = os.getenv("USER_EMAIL")

@@ -1,4 +1,6 @@
 import argparse
+import threading
+
 import requests
 import copy
 import json
@@ -160,6 +162,60 @@ class Utils:
 
         job_id = timestamp_str + random_part
         return job_id[:16]
+
+
+
+
+    @staticmethod
+    def select_enabled_indices():
+        """
+        根据 ENABLE_NUM 随机选择若干账号，返回索引列表。
+        索引对应 USER_TOKEN_DICT keys 的顺序，顺序随机。
+        例如返回 [0,2,5] 表示选中字典中第 0、2、5 个 key。
+        """
+
+        # TODO 为每个账号随机分配网络代理和浏览器代理，并重新组织输出格式
+        if Config.ENABLE_NUM == -1:
+            # 随机打乱全部索引顺序返回
+            indices = list(range(Config.APP_NUM))
+        else:
+            indices = random.sample(range(Config.APP_NUM), Config.ENABLE_NUM)
+        random.shuffle(indices)
+        return indices
+
+    @staticmethod
+    def schedule_startup(enabled_indices, startup_func, *args, **kwargs):
+        """
+        enabled_indices: list of indices (对应 USER_TOKEN_DICT keys 的顺序)
+        startup_func: 要启动账号时调用的函数，签名如 func(account_key, refresh_token, ...)
+        args, kwargs: 额外传给 startup_func 的参数
+
+        调度所有账号在 Config.MAX_START_TIME 内启动，使用 threading.Timer。
+        """
+        total = len(enabled_indices)
+        if total == 0:
+            return []
+
+        interval = Config.MAX_START_DELAY / total
+        # keys 顺序
+        keys = list(Config.USER_TOKEN_DICT.keys())
+        scheduled = []  # 存放 (account_key, delay, timer_obj)
+
+        for idx_pos, idx in enumerate(enabled_indices):
+            # idx_pos in [0, total-1], idx 是 USER_TOKEN_DICT 的索引
+            start = idx_pos * interval
+            end = (idx_pos + 1) * interval
+            delay = random.uniform(start, end)
+            account_key = keys[idx]
+            refresh_token = Config.USER_TOKEN_DICT[account_key]
+            # 定义调用：用 lambda 捕获当前变量
+            timer = threading.Timer(delay, startup_func, args=(account_key, refresh_token) + args, kwargs=kwargs)
+            timer.daemon = True  # 守护线程，主线程结束时自动退出
+            timer.start()
+            scheduled.append((account_key, delay, timer))
+            print(f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s")
+
+        return scheduled
 
 
 
