@@ -11,7 +11,7 @@ class Config:
     CLIENT_ID = None                # Azure 应用 Client ID
     CLIENT_SECRET = None            # Azure 应用 Client Secret
     # TENANT_ID = None                # Azure AD 租户 ID
-    REFRESH_TOKEN = None            # OAuth2 刷新令牌
+    MS_TOKEN = None                 # OAuth2 刷新令牌
     GH_TOKEN = None                 # GitHub token
     # ---------------------------------------------------------------
 
@@ -137,7 +137,7 @@ class Config:
             "CLIENT_ID",
             "CLIENT_SECRET",
             # "TENANT_ID",
-            "REFRESH_TOKEN",
+            "MS_TOKEN",
             "GH_TOKEN",
             "USER_EMAIL"
         ]
