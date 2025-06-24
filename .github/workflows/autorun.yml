@@ -70,5 +70,7 @@ jobs:
         echo "Log file uploaded successfully."
 
     - name: Post Process
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
       run: |
         python utils.py --task PostProcess

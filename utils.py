@@ -95,7 +95,6 @@ class Utils:
         """
         连接 MySQL 数据库，完成任务的后处理操作
         """
-        connection = None
         # 检查是否配置数据库
         database_url = os.getenv("DATABASE_URL")
         if database_url is None:
@@ -117,9 +116,6 @@ class Utils:
             job_detail_service.post_db_process(job_id)
         except Exception as e:
             raise BasicException(ErrorCode.UPDATE_DATABASE_ERROR, extra=e)
-        finally:
-            if connection:
-                connection.close()
         logging.info(f"后置处理已完成，更新 job_id={job_id} 的任务状态为 success")
 
     @staticmethod
