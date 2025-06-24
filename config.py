@@ -139,7 +139,6 @@ class Config:
             # "TENANT_ID",
             "MS_TOKEN",
             "GH_TOKEN",
-            "USER_EMAIL"
         ]
         for key in required_envs:
             val = os.getenv(key)
