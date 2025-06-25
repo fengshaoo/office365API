@@ -51,7 +51,8 @@ class Config:
     REQUEST_COMMON_HEADERS = {
         'Accept': '*/*',
         'Connection': 'keep-alive',
-        'Content-Type': 'application/json',
+        # 'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.9',
         # 下列项目根据不同的请求实际计算
