@@ -49,7 +49,6 @@ class Config:
 
 
     REQUEST_COMMON_HEADERS = {
-        'Host': 'graph.microsoft.com',
         'Accept': '*/*',
         'Connection': 'keep-alive',
         'Content-Type': 'application/json',

@@ -130,7 +130,8 @@ class API(object):
             'refresh_token': refresh_token,
             'client_id': client_id,
             'client_secret': client_secret,
-            'redirect_uri': 'http://localhost:53682/'
+            'redirect_uri': 'http://localhost:53682/',
+            "scope": "https://graph.microsoft.com/.default"
         }
 
         resp = self.session.post(
@@ -238,12 +239,15 @@ class API(object):
 
     def run(self, account_key, refresh_token, proxy, user_agent, *args):
         self.logger.info("更新数据库进入任务调用")
-        self.job_detail_service.update_process(self.job_id, "run_api")
-        # 1.登陆
-        self.logger.info("用户登陆")
-        access_token, user_info = self.get_access_and_userinfo(account_key, refresh_token, proxy, user_agent)
-        self.logger.info(f"已获取用户信息：access_token: ******, user_info: {user_info}")
-        self.logger.info("调试终止程序")
+        try:
+            self.job_detail_service.update_process(self.job_id, "run_api")
+            # 1.登陆
+            self.logger.info("用户登陆")
+            access_token, user_info = self.get_access_and_userinfo(account_key, refresh_token, proxy, user_agent)
+            self.logger.info(f"已获取用户信息：access_token: ******, user_info: {user_info}")
+            self.logger.info("调试终止程序")
+        except Exception as e:
+            raise BasicException(ErrorCode.MAIN_LOGICAL_ERROR, extra=e)
 
 
 
