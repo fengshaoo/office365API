@@ -218,10 +218,14 @@ class Utils:
                 args=(account_key, refresh_token, proxy, user_agent, *args),
                 kwargs=kwargs
             )
-            timer.daemon = True  # 守护线程，主线程结束时自动退出
+            timer.daemon = False  # 主线程等待
             timer.start()
             scheduled.append((account_key, delay, timer))
             logging.info(f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}")
+
+        for item in scheduled:
+            timer = item[2]
+            timer.join()
 
         return scheduled
 
