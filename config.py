@@ -55,7 +55,6 @@ class Config:
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.9',
         # 下列项目根据不同的请求实际计算
-        'Content-Length': '',
         'User-Agent': '',
 
     }
@@ -150,7 +149,9 @@ class Config:
             setattr(cls, key, val)  # 反射设置字段值
 
         # 账号相关配置
-        cls.APP_NUM = int(os.getenv("APP_NUM", cls.APP_NUM))
+        # cls.APP_NUM = int(os.getenv("APP_NUM", cls.APP_NUM))
+        # TODO 临时调试
+        cls.APP_NUM = 1
         if cls.APP_NUM == 1:
             logging.info("单账号模式")
         if cls.ENABLE_NUM != -1 and cls.ENABLE_NUM > cls.APP_NUM:

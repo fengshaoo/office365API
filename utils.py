@@ -173,8 +173,6 @@ class Utils:
         索引对应 USER_TOKEN_DICT keys 的顺序，顺序随机。
         例如返回 [0,2,5] 表示选中字典中第 0、2、5 个 key。
         """
-
-        # TODO 为每个账号随机分配网络代理和浏览器代理，并重新组织输出格式
         if Config.ENABLE_NUM == -1:
             # 随机打乱全部索引顺序返回
             indices = list(range(Config.APP_NUM))
@@ -208,12 +206,22 @@ class Utils:
             delay = random.uniform(start, end)
             account_key = keys[idx]
             refresh_token = Config.USER_TOKEN_DICT[account_key]
+
+            # 随机选择 proxy 和 UA
+            proxy = random.choice(Config.PROXIES) if Config.PROXIES else None
+            user_agent = random.choice(Config.USER_AGENT_LIST) if Config.USER_AGENT_LIST else None
+
             # 定义调用：用 lambda 捕获当前变量
-            timer = threading.Timer(delay, startup_func, args=(account_key, refresh_token) + args, kwargs=kwargs)
+            timer = threading.Timer(
+                delay,
+                startup_func,
+                args=(account_key, refresh_token, proxy, user_agent, *args),
+                kwargs=kwargs
+            )
             timer.daemon = True  # 守护线程，主线程结束时自动退出
             timer.start()
             scheduled.append((account_key, delay, timer))
-            print(f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s")
+            logging.info(f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}")
 
         return scheduled
 

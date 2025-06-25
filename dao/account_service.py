@@ -1,8 +1,6 @@
-from datetime import datetime
 
 from configuration.base_db_session import BaseDBSession
 from pojo.account import Account
-from pojo.job_detail import JobDetail
 
 
 class AccountService(BaseDBSession):
@@ -13,7 +11,7 @@ class AccountService(BaseDBSession):
         with self.get_session() as session:
             return session.query(Account).filter(Account.env_name == env_name).first()
 
-    def create_job(self, account: Account):
+    def insert(self, account: Account):
         with self.get_session() as session:
             session.add(account)
 
@@ -22,3 +20,14 @@ class AccountService(BaseDBSession):
             account = session.query(Account).filter(Account.env_name == env_name).first()
             if account:
                 account.access_token = access_token
+
+    def update(self, env_name: str, **fields):
+        with self.get_session() as session:
+            account = session.query(Account).filter(Account.env_name == env_name).first()
+            if not account:
+                return False
+
+            for field, value in fields.items():
+                if hasattr(account, field):
+                    setattr(account, field, value)
+            return True

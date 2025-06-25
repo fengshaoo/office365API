@@ -16,7 +16,7 @@ class JobDetailService(BaseDBSession):
         with self.get_session() as session:
             session.add(job)
 
-    def update_process(self, job_id: int, process: str):
+    def update_process(self, job_id: str, process: str):
         with self.get_session() as session:
             job = session.query(JobDetail).filter(JobDetail.id == job_id).first()
             if job:
