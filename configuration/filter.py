@@ -7,6 +7,7 @@ class NoParamsFilter(logging.Filter):
     """
     def filter(self, record):
         msg = record.getMessage().lower()
+        logging.error(msg)
         if 'parameters' in msg or 'generated in' in msg:
             return False
         return True
