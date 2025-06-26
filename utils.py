@@ -97,10 +97,11 @@ class Utils:
             raise ValueError("keys 和 values 的长度不一致")
         # GitHub工作流变量文件
         github_env = os.getenv("GITHUB_ENV")
-
-        with open(github_env, 'a') as f:
+        mask_file = "/tmp/github_mask.sh"
+        with open(github_env, 'a', encoding='utf-8') as env_file, open(mask_file, 'w', encoding='utf-8') as mask_f:
             for k, v in zip(keys, values):
-                f.write(f"{k}={v}\n")
+                env_file.write(f"{k}={v}\n")
+                mask_f.write(f'echo "::add-mask::{v}"\n')
 
 
     @staticmethod
