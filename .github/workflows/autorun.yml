@@ -64,7 +64,7 @@ jobs:
         mkdir -p ~/.ssh
         echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan "${LOG_SERVER_HOST}" >> ~/.ssh/known_hosts
+        ssh-keyscan "${LOG_SERVER_HOST}" 2>/dev/null | grep -v '^#' >> ~/.ssh/known_hosts
         
         LOG_DATE=$(date +'%m%d%H%M')
         mv ${LOG_FILENAME}.log ${LOG_FILENAME}_${LOG_DATE}.log
