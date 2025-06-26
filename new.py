@@ -63,29 +63,6 @@ class RunService(object):
         except Exception as e:
             raise BasicException(ErrorCode.WRITE_FILE_ERROR, extra=e)
 
-        # 配置日志服务器连接变量
-        # if Config.LOG_SERVER_URL is None:
-        #     self.logger.warning("未配置日志服务器，采用本地模式，该模式下无日志存档")
-        # else:
-        #     try:
-        #         # 解析日志服务器url
-        #         user, rest = Config.LOG_SERVER_URL.split('@', 1)
-        #         host, file_path = rest.split('/', 1)
-        #         Utils.write_env(
-        #             [
-        #                 "LOG_SERVER_USER",
-        #                 "LOG_SERVER_HOST",
-        #                 "LOG_FILE_PATH"
-        #             ],
-        #             [
-        #                 user,
-        #                 host,
-        #                 file_path
-        #             ]
-        #         )
-        #     except Exception as e:
-        #         raise BasicException(ErrorCode.WRITE_FILE_ERROR, extra=e)
-
         # 建立数据库连接
         if Config.DATABASE_URL is None:
             self.logger.warning("未配置数据库，采用本地模式")

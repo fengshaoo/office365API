@@ -182,9 +182,6 @@ class Config:
             cls.USER_TOKEN_DICT[key] = token
 
         # 选配字段设置
-        cls.LOG_SERVER_URL = os.getenv("LOG_SERVER_URL", cls.LOG_SERVER_URL)
-        if cls.LOG_SERVER_URL is None:
-            logging.warning("未配置日志服务器，采用本地模式，该模式下无日志存档")
         cls.DATABASE_URL = os.getenv("DATABASE_URL", cls.DATABASE_URL)
         if cls.DATABASE_URL is None:
             logging.warning("未配置数据库，本地模式")
