@@ -1,6 +1,9 @@
 import logging
 import os
 
+from configuration.logger_config import NoParamsFilter
+from errorInfo import BasicException, ErrorCode
+
 
 class Config:
     """
@@ -130,8 +133,14 @@ class Config:
         r'https://graph.microsoft.com/beta/me/messages?$select=internetMessageHeaders&$top',
     ]
 
+    _initialized = False
+
     @classmethod
     def load(cls):
+        if cls._initialized:
+            return
+
+        logging.info("加载环境变量")
         # 必须配置项
         required_envs = [
             "CLIENT_ID",
@@ -152,18 +161,24 @@ class Config:
             if env_app_num.isdigit():
                 cls.APP_NUM = int(env_app_num)
             else:
-                raise ValueError(f"环境变量 APP_NUM 配置错误，请检查配置项并重新启动")
+                raise BasicException(ErrorCode.INIT_ENVIRONMENT_ERROR, extra="环境变量 APP_NUM 配置错误，请检查配置项并重新启动")
 
         if cls.APP_NUM == 1:
             logging.info("单账号模式")
         if cls.ENABLE_NUM != -1 and cls.ENABLE_NUM > cls.APP_NUM:
-            raise ValueError("启用账号数(ENABLE_NUM)超出所配置的账号总数(APP_NUM)，请检查配置项并重新启动")
+            raise BasicException(
+                ErrorCode.INIT_ENVIRONMENT_ERROR,
+                extra="启用账号数(ENABLE_NUM)超出所配置的账号总数(APP_NUM)，请检查配置项并重新启动"
+            )
         cls.USER_TOKEN_DICT["MS_TOKEN"] = cls.MS_TOKEN
         for i in range(1, cls.APP_NUM):
             key = f"MS_TOKEN_{i:02d}"
             token = os.getenv(key)
             if token is None:
-                raise ValueError(f"环境变量 `{key}` 缺失或账号数量(APP_NUM)配置错误，请检查配置项并重新启动，当前 APP_NUM = {cls.APP_NUM}")
+                raise BasicException(
+                    ErrorCode.INIT_ENVIRONMENT_ERROR,
+                    extra=f"环境变量 `{key}` 缺失或账号数量(APP_NUM)配置错误，请检查配置项并重新启动，当前 APP_NUM = {cls.APP_NUM}"
+                )
             cls.USER_TOKEN_DICT[key] = token
 
         # 选配字段设置
@@ -181,10 +196,18 @@ class Config:
             cls.TELEGRAM_MESSAGE_STATUS = False
             logging.warning("未启用 Telegram 通知")
             if cls.USER_EMAIL is None:
-                raise ValueError("无法启用通知功能，Tel & Email 均未配置")
+                raise BasicException(
+                    ErrorCode.INIT_ENVIRONMENT_ERROR,
+                    extra="无法启用通知功能，Tel & Email 均未配置"
+                )
 
         # 配置调试环境
         cls.ENV_MODE = os.getenv("ENV_MODE")
+        # 设置 SQLAlchemy 的日志等级
+        sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
+        # 添加过滤器，防止输出参数
+        sqlalchemy_logger.addFilter(NoParamsFilter())
+        sqlalchemy_logger.setLevel(logging.WARNING)
         if cls.ENV_MODE == "DEBUG":
             logging.warning("调试环境")
             cls.MIN_START_DELAY = 0
@@ -193,3 +216,7 @@ class Config:
             cls.USER_AGENT_LIST = [
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.119 Safari/537.36",
             ]
+
+            sqlalchemy_logger.setLevel(logging.DEBUG)
+
+        cls._initialized = True

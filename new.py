@@ -16,7 +16,7 @@ from pojo.job_detail import JobDetail
 from utils import Utils
 from errorInfo import ErrorCode
 from errorInfo import BasicException
-from configuration.logger_config import setup_logger
+from configuration.logger_config import setup_logger, CLogger
 
 
 class Foo(object):
@@ -39,18 +39,10 @@ class RunService(object):
     def __init__(self):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.info("日志初始化配置完成")
-
         self.session = CustomSession()
 
 
     def __enter__(self):
-        self.logger.info("加载环境变量")
-        try:
-            Config.load()
-        except Exception as e:
-            raise BasicException(ErrorCode.INIT_ENVIRONMENT_ERROR, extra=e)
-
         # 生成本次任务的唯一id
         self.job_id = Utils.generate_id()
         self.logger.info(f"本次任务ID：{self.job_id}")
@@ -380,6 +372,7 @@ def entrance():
 
 if __name__ == "__main__":
     # 日志初始化:
-    setup_logger()
+    CLogger.setup_logger()
+    Config.load()
     # 进入主逻辑
     entrance()
