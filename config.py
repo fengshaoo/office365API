@@ -217,6 +217,6 @@ class Config:
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.119 Safari/537.36",
             ]
 
-            sqlalchemy_logger.setLevel(logging.DEBUG)
+            sqlalchemy_logger.setLevel(logging.INFO)
 
         cls._initialized = True
