@@ -1,5 +1,7 @@
 import logging
 from config import Config
+from configuration.filter import NoParamsFilter
+
 
 class CLogger(object):
     _initialized = False
@@ -16,5 +18,8 @@ class CLogger(object):
                 # logging.StreamHandler()
             ]
         )
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers:
+            handler.addFilter(NoParamsFilter())
         logging.info("日志初始化配置完成")
         cls._initialized = True
