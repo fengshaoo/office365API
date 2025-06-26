@@ -16,7 +16,7 @@ from pojo.job_detail import JobDetail
 from utils import Utils
 from errorInfo import ErrorCode
 from errorInfo import BasicException
-from configuration.logger_config import setup_logger, CLogger
+from configuration.logger_config import CLogger
 
 
 class Foo(object):
