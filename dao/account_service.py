@@ -9,7 +9,10 @@ class AccountService(BaseDBSession):
 
     def get_by_env_name(self, env_name: int):
         with self.get_session() as session:
-            return session.query(Account).filter(Account.env_name == env_name).first()
+            result = session.query(Account).filter(Account.env_name == env_name).first()
+            if result:
+                return result
+            return None
 
     def insert(self, account: Account):
         with self.get_session() as session:

@@ -171,22 +171,21 @@ class API(object):
         expires_at = None
         user_info = None
 
-        rec = None
+        db_rec = None
         db_url = Config.DATABASE_URL
         if db_url is not None:
-            rec = self.accountService.get_by_env_name(account_key)
+            db_rec = self.accountService.get_by_env_name(account_key)
 
         # 获取token
-        if db_url is None or rec is None:
+        if db_url is None or db_rec is None:
             token_data = self.getmstoken(client_id, client_secret, refresh_token, proxy, user_agent)
             access_token = token_data.get("access_token")
             expires_at = datetime.now(timezone.utc) + timedelta(seconds=int(token_data.get("expires_in")))
         else:
-            access_token = rec.access_token
-            expires_at = rec.expires_at
+            access_token, expires_at = db_rec
 
         # 存储本次获取的信息
-        if db_url is not None and rec is None:
+        if db_url is not None and db_rec is None:
             self.logger.info("数据库模式，插入用户token信息")
             new_account = Account(
                 env_name = account_key,
