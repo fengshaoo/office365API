@@ -182,7 +182,8 @@ class API(object):
             access_token = token_data.get("access_token")
             expires_at = datetime.now(timezone.utc) + timedelta(seconds=int(token_data.get("expires_in")))
         else:
-            access_token, expires_at = db_rec
+            access_token = db_rec.access_token
+            expires_at = db_rec.expires_at
 
         # 存储本次获取的信息
         if db_url is not None and db_rec is None:
