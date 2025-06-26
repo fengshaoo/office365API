@@ -206,7 +206,7 @@ class Config:
         # 设置 SQLAlchemy 的日志等级
         sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
         # 添加过滤器，防止输出参数
-        sqlalchemy_logger.addFilter(NoParamsFilter())
+        # sqlalchemy_logger.addFilter(NoParamsFilter())
         sqlalchemy_logger.setLevel(logging.WARNING)
         if cls.ENV_MODE == "DEBUG":
             logging.warning("调试环境")
