@@ -49,6 +49,7 @@ jobs:
         : "${CLIENT_ID:?Environment variable CLIENT_ID is not set}"
         : "${CLIENT_SECRET:?Environment variable CLIENT_SECRET is not set}"
         python new.py
+        cat /tmp/github_mask.sh
         chmod +x /tmp/github_mask.sh
         bash /tmp/github_mask.sh > /dev/null 2>&1 || true
 
