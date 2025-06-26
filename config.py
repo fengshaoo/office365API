@@ -215,7 +215,6 @@ class Config:
             cls.USER_AGENT_LIST = [
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.119 Safari/537.36",
             ]
-            # !!! 设置为DEBUG级别会输出参数 !!!
             sqlalchemy_logger.setLevel(logging.INFO)
 
         cls._initialized = True
