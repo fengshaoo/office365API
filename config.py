@@ -1,7 +1,7 @@
 import logging
 import os
 
-from configuration.logger_config import NoParamsFilter
+from configuration.filter import NoParamsFilter
 from errorInfo import BasicException, ErrorCode
 
 

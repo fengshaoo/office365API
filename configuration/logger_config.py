@@ -1,11 +1,6 @@
 import logging
 from config import Config
 
-
-class NoParamsFilter(logging.Filter):
-    def filter(self, record):
-        return 'parameters' not in record.getMessage().lower()
-
 class CLogger(object):
     _initialized = False
 
