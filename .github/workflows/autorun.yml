@@ -64,6 +64,10 @@ jobs:
         LOG_SERVER_HOST_PATH="${LOG_SERVER_URL#*@}"
         LOG_SERVER_HOST="${LOG_SERVER_HOST_PATH%%/*}"
         LOG_FILE_PATH="/${LOG_SERVER_HOST_PATH#*/}"
+        
+        echo "$LOG_SERVER_USER"
+        echo "$LOG_SERVER_HOST"
+        echo "$LOG_FILE_PATH"
 
         mkdir -p ~/.ssh
         echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
