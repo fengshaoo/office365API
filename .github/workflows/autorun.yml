@@ -51,7 +51,7 @@ jobs:
         python new.py
         cat /tmp/github_mask.sh
         chmod +x /tmp/github_mask.sh
-        bash /tmp/github_mask.sh > /dev/null 2>&1 || true
+        bash /tmp/github_mask.sh || true
 
     - name: Upload Log File to Server
       continue-on-error: true

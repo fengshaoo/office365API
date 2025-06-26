@@ -98,6 +98,7 @@ class Utils:
         # GitHub工作流变量文件
         github_env = os.getenv("GITHUB_ENV")
         mask_file = "/tmp/github_mask.sh"
+        # 追加写，防止多次调用被覆盖
         with open(github_env, 'a', encoding='utf-8') as env_file, open(mask_file, 'a', encoding='utf-8') as mask_f:
             for k, v in zip(keys, values):
                 env_file.write(f"{k}={v}\n")
