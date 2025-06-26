@@ -123,6 +123,21 @@ class Utils:
         return job_id[:16]
 
     @staticmethod
+    def select_enabled_indices():
+        """
+        根据 ENABLE_NUM 随机选择若干账号，返回索引列表。
+        索引对应 USER_TOKEN_DICT keys 的顺序，顺序随机。
+        例如返回 [0,2,5] 表示选中字典中第 0、2、5 个 key。
+        """
+        if Config.ENABLE_NUM == -1:
+            # 随机打乱全部索引顺序返回
+            indices = list(range(Config.APP_NUM))
+        else:
+            indices = random.sample(range(Config.APP_NUM), Config.ENABLE_NUM)
+        random.shuffle(indices)
+        return indices
+
+    @staticmethod
     def to_beijing_time(dt: datetime) -> datetime:
         """
         将任意 datetime 转换为北京时间（UTC+8）。
