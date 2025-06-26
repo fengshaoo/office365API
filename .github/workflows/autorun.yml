@@ -57,8 +57,10 @@ jobs:
       continue-on-error: true
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        LOG_SERVER_URL: ${{ secrets.SSH_PRIVATE_KEY }}
       run: |
         : "${SSH_PRIVATE_KEY:?Environment variable SSH_PRIVATE_KEY is not set}"
+        : "${LOG_SERVER_URL:?Environment variable LOG_SERVER_URL is not set}"
         
         LOG_SERVER_USER="${LOG_SERVER_URL%%@*}"
         LOG_SERVER_HOST_PATH="${LOG_SERVER_URL#*@}"
