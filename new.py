@@ -1,15 +1,12 @@
 # -*- coding: UTF-8 -*-
-import itertools
 import time
 import logging
 from datetime import datetime, timezone, timedelta
 
 import requests
-from requests import session
-from sqlalchemy.sql.functions import now
 
 from config import Config
-from custom_session import CustomSession
+from configuration.custom_session import CustomSession
 from dao.account_service import AccountService
 from dao.job_detail_service import JobDetailService
 from pojo.account import Account
@@ -139,7 +136,10 @@ class API(object):
             data=data,
             timeout=10,
             proxy=proxy,
-            user_agent=user_agent
+            headers = {
+                "User-Agent": user_agent,
+                "Content-Type": "application/x-www-form-urlencoded",
+            }
         )
         resp.raise_for_status()
         return resp.json()
@@ -155,15 +155,8 @@ class API(object):
             headers=headers,
             timeout=10
         )
-        if resp.status_code == 200:
-            return resp.json()
-        else:
-            error_info = None
-            if resp.status_code == 401:
-                error_info = ErrorCode.PREMISSION_DENIED
-            else:
-                error_info = ErrorCode.INVOKE_API_ERROR
-            raise BasicException(error_info, extra=f"Code: {resp.status_code}, Text: {resp.text}")
+        resp.raise_for_status()
+        return resp.json()
 
     def get_access_and_userinfo(self, account_key, refresh_token, proxy, user_agent):
         """
@@ -212,9 +205,10 @@ class API(object):
                 try:
                     user_info = self.fetch_user_info(access_token)
                     valid_access = True
-                except BasicException as e:
-                    if e.code != 2401:
-                        raise e
+                except requests.exceptions.HTTPError as e:
+                    response = e.response
+                    if response is None or response.status_code != 401:
+                        raise BasicException(ErrorCode.INVOKE_API_ERROR, extra=e)
         if not valid_access:
             self.logger.info("access_token 失效，尝试刷新")
             # 刷新
@@ -231,7 +225,10 @@ class API(object):
                     expires_at = expires_at
                 )
             # 重新获取用户信息
-            user_info = self.fetch_user_info(access_token)
+            try:
+                user_info = self.fetch_user_info(access_token)
+            except Exception as e:
+                raise BasicException(ErrorCode.INVOKE_API_ERROR, extra=e)
 
         return access_token, user_info
 
