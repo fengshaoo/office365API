@@ -168,6 +168,7 @@ class RunService(object):
             timer = item[2]
             timer.join()
 
+        self.logger.info("退出任务调用")
         try:
             self.job_detail_service.update_process(self.job_id, "exit_RunService")
         except Exception as e:
@@ -275,7 +276,8 @@ class CallAPI(object):
                 env_name = account_key,
                 access_token = access_token,
                 refresh_token = refresh_token,
-                expires_at = expires_at
+                expires_at = expires_at,
+                create_time = Utils.get_beijing_time()
             )
             self.account_service.insert(new_account)
 

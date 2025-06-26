@@ -19,6 +19,7 @@ class CLogger(object):
             ]
         )
         root_logger = logging.getLogger()
+        # 添加日志过滤器，数据脱敏
         for handler in root_logger.handlers:
             handler.addFilter(NoParamsFilter())
         logging.info("日志初始化配置完成")

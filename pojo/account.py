@@ -13,3 +13,4 @@ class Account(Base):
     refresh_token = Column(String(300), nullable=True)
     expires_at = Column(DateTime)
     update_time = Column(DateTime, default=lambda: datetime.now(timezone.utc) + timedelta(hours=8), onupdate=lambda: datetime.now(timezone.utc) + timedelta(hours=8))
+    create_time = Column(DateTime)
