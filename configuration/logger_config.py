@@ -15,7 +15,7 @@ class CLogger(object):
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
                 logging.FileHandler(f"{Config.LOG_FILENAME}.log", mode='w', encoding='utf-8'),
-                # logging.StreamHandler()
+                logging.StreamHandler()
             ]
         )
         root_logger = logging.getLogger()
