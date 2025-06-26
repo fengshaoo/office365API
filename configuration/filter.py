@@ -9,6 +9,7 @@ class NoParamsFilter(logging.Filter):
         'parameters',
         '[generated in',
         '[cached since',
+        '[raw sql]'
     ]
 
     def filter(self, record):
