@@ -265,7 +265,7 @@ class API(object):
 
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self.logger.info("执行清理工作")
 
 
 def select_enabled_indices():
