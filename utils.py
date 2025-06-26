@@ -17,7 +17,7 @@ from config import Config
 from dao.job_detail_service import JobDetailService
 from errorInfo import ErrorCode
 from errorInfo import BasicException
-from configuration.logger_config import setup_logger
+from configuration.logger_config import CLogger
 
 
 class Utils:
@@ -167,7 +167,7 @@ class Utils:
 
 
 if __name__ == "__main__":
-    setup_logger()
+    CLogger.setup_logger()
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', choices=["PostProcess", 'task2'], required=True, help='任务名称')
     args = parser.parse_args()
