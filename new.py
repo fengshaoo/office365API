@@ -118,152 +118,6 @@ class RunService(object):
         return self
 
 
-    # def getmstoken(self, client_id, client_secret, refresh_token, proxy, user_agent):
-    #     """
-    #     调用 OAuth2 刷新接口，返回 dict 中至少包含:
-    #       - access_token
-    #       - refresh_token (可能更新；若没有则继续使用旧的)
-    #       - expires_in (秒)
-    #     """
-    #     data = {
-    #         'grant_type': 'refresh_token',
-    #         'refresh_token': refresh_token,
-    #         'client_id': client_id,
-    #         'client_secret': client_secret,
-    #         'redirect_uri': Config.REDIRECT_URI,
-    #         "scope": "https://graph.microsoft.com/.default"
-    #     }
-    #
-    #     resp = self.session.post(
-    #         Config.ACCESS_TOKEN_URI,
-    #         data=data,
-    #         timeout=10,
-    #         proxy=proxy,
-    #         headers = {
-    #             "User-Agent": user_agent,
-    #             "Content-Type": "application/x-www-form-urlencoded",
-    #         }
-    #     )
-    #     resp.raise_for_status()
-    #     return resp.json()
-    #
-    # def fetch_user_info(self, access_token, user_agent):
-    #     """
-    #     用 access_token 调用用户信息接口，例如 Microsoft Graph /me
-    #     返回 JSON dict；若失败抛异常或返回 None
-    #     """
-    #     headers = {'Authorization': f'Bearer {access_token}'}
-    #     resp = self.session.get(
-    #         "https://graph.microsoft.com/v1.0/me",
-    #         headers = {
-    #             "Authorization": f"Bearer {access_token}",
-    #             "User-Agent": user_agent,
-    #         },
-    #         timeout=10
-    #     )
-    #     resp.raise_for_status()
-    #     return resp.json()
-    #
-    # def get_access_and_userinfo(self, account_key, refresh_token, proxy, user_agent):
-    #     """
-    #     account_key: "MS_TOKEN" 或 "MS_TOKEN_01" 等
-    #     refresh_token: 初始 refresh_token（从 Config.USER_TOKEN_DICT 取）
-    #     返回 (access_token, user_info_dict)
-    #     """
-    #     client_id = Config.CLIENT_ID
-    #     client_secret = Config.CLIENT_SECRET
-    #
-    #     access_token = None
-    #     expires_at = None
-    #     user_info = None
-    #
-    #     db_rec = None
-    #     db_url = Config.DATABASE_URL
-    #     if db_url is not None:
-    #         db_rec = self.accountService.get_by_env_name(account_key)
-    #
-    #     # 获取token
-    #     if db_url is None or db_rec is None:
-    #         token_data = self.getmstoken(client_id, client_secret, refresh_token, proxy, user_agent)
-    #         access_token = token_data.get("access_token")
-    #         expires_at = Utils.get_beijing_time(int(token_data.get("expires_in")))
-    #     else:
-    #         access_token = db_rec.access_token
-    #         expires_at = Utils.to_beijing_time(db_rec.expires_at)
-    #
-    #     # 存储本次获取的信息
-    #     if db_url is not None and db_rec is None:
-    #         self.logger.info("数据库模式，插入用户token信息")
-    #         new_account = Account(
-    #             env_name = account_key,
-    #             access_token = access_token,
-    #             refresh_token = refresh_token,
-    #             expires_at = expires_at
-    #         )
-    #         self.accountService.insert(new_account)
-    #
-    #     # 判断是否有有效 access_token
-    #     valid_access = False
-    #     if access_token and expires_at:
-    #         # 若在未来且剩余时间>10秒，视为有效；否则视为过期
-    #         if expires_at > Utils.get_beijing_time(10):
-    #             # 尝试获取用户信息
-    #             try:
-    #                 user_info = self.fetch_user_info(access_token, user_agent)
-    #                 valid_access = True
-    #             except requests.exceptions.HTTPError as e:
-    #                 response = e.response
-    #                 if response is None or response.status_code != 401:
-    #                     raise BasicException(ErrorCode.INVOKE_API_ERROR, extra=e)
-    #     if not valid_access:
-    #         self.logger.info("access_token 失效，尝试刷新")
-    #         # 刷新
-    #         token_data = self.getmstoken(client_id, client_secret, refresh_token, proxy, user_agent)
-    #         access_token = token_data.get("access_token")
-    #         expires_at = Utils.get_beijing_time(int(token_data.get("expires_in")))
-    #         self.logger.info("刷新成功")
-    #
-    #         # 更新数据库
-    #         if db_url is not None:
-    #             self.logger.info("数据库模式，更新用户token信息")
-    #             self.accountService.update(
-    #                 env_name = account_key,
-    #                 access_token = access_token,
-    #                 expires_at = expires_at
-    #             )
-    #         # 重新获取用户信息
-    #         try:
-    #             user_info = self.fetch_user_info(access_token, user_agent)
-    #         except Exception as e:
-    #             raise BasicException(ErrorCode.INVOKE_API_ERROR, extra=e)
-    #
-    #     return access_token, user_info
-    #
-    #
-    #
-    # def run(self, account_key, refresh_token, proxy, user_agent, *args):
-    #     self.logger.info("更新数据库进入任务调用")
-    #     try:
-    #         self.job_detail_service.update_process(self.job_id, "run_api")
-    #         # 1.登陆
-    #         self.logger.info("用户登陆")
-    #         access_token, user_info = self.get_access_and_userinfo(account_key, refresh_token, proxy, user_agent)
-    #         # self.logger.info(f"已获取用户信息：access_token: ******, user_info: {user_info}")
-    #
-    #
-    #         if Config.ENV_MODE == "DEBUG":
-    #             self.logger.info("调试终止程序")
-    #             sys.exit()
-    #     except Exception as e:
-    #         raise BasicException(ErrorCode.MAIN_LOGICAL_ERROR, extra=e)
-    #
-    #
-    #
-    #     # 2.拉取邮件和日程
-    #
-    #     # 3.随机调用
-
-
     def schedule_startup(self, enabled_indices, startup_func, *args, **kwargs):
         """
         enabled_indices: list of indices (对应 USER_TOKEN_DICT keys 的顺序)
@@ -272,9 +126,9 @@ class RunService(object):
 
         调度所有账号在 Config.MAX_START_TIME 内启动，使用 threading.Timer。
         """
-        self.logger.info("更新数据库进入任务调用")
+        self.logger.info("进入任务调用")
         try:
-            self.job_detail_service.update_process(self.job_id, "run_api")
+            self.job_detail_service.update_process(self.job_id, "enter_RunService")
         except Exception as e:
             raise BasicException(ErrorCode.UPDATE_DATABASE_ERROR, extra=e)
 
@@ -303,7 +157,13 @@ class RunService(object):
             timer = threading.Timer(
                 delay,
                 startup_func,
-                args=(account_key, refresh_token, proxy, user_agent, *args),
+                args=(
+                    account_key,
+                    refresh_token,
+                    proxy,
+                    user_agent,
+                    *args
+                ),
                 kwargs=kwargs
             )
             timer.daemon = False  # 主线程等待
@@ -315,6 +175,11 @@ class RunService(object):
         for item in scheduled:
             timer = item[2]
             timer.join()
+
+        try:
+            self.job_detail_service.update_process(self.job_id, "exit_RunService")
+        except Exception as e:
+            raise BasicException(ErrorCode.UPDATE_DATABASE_ERROR, extra=e)
 
         return scheduled
 
@@ -329,18 +194,13 @@ class RunService(object):
 
 class CallAPI(object):
 
-    def __init__(self):
+    def __init__(self, session, job_detail_service, account_service):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.session = CustomSession()
-
-        # 建立数据库连接
-        if Config.DATABASE_URL is not None:
-            try:
-                self.accountService = AccountService()
-            except Exception as e:
-                raise BasicException(ErrorCode.DATABASE_CONNECT_ERROR, extra=e)
+        self.session = session
+        self.job_detail_service = job_detail_service
+        self.account_service = account_service
 
 
     def get_ms_token(self, client_id, client_secret, refresh_token, proxy, user_agent):
@@ -405,7 +265,7 @@ class CallAPI(object):
         db_rec = None
         db_url = Config.DATABASE_URL
         if db_url is not None:
-            db_rec = self.accountService.get_by_env_name(account_key)
+            db_rec = self.account_service.get_by_env_name(account_key)
 
         # 获取token
         if db_url is None or db_rec is None:
@@ -425,7 +285,7 @@ class CallAPI(object):
                 refresh_token = refresh_token,
                 expires_at = expires_at
             )
-            self.accountService.insert(new_account)
+            self.account_service.insert(new_account)
 
         # 判断是否有有效 access_token
         valid_access = False
@@ -451,7 +311,7 @@ class CallAPI(object):
             # 更新数据库
             if db_url is not None:
                 self.logger.info("数据库模式，更新用户token信息")
-                self.accountService.update(
+                self.account_service.update(
                     env_name = account_key,
                     access_token = access_token,
                     expires_at = expires_at
@@ -471,7 +331,7 @@ class CallAPI(object):
             # 1.登陆
             self.logger.info("用户登陆")
             access_token, user_info = self.get_access_and_userinfo(account_key, refresh_token, proxy, user_agent)
-            # self.logger.info(f"已获取用户信息：access_token: ******, user_info: {user_info}")
+            self.logger.info(f"已获取用户信息：access_token: ******, user_info: ******")
 
 
             if Config.ENV_MODE == "DEBUG":
@@ -497,7 +357,11 @@ def entrance():
 
     try:
         with RunService() as run_service:
-            call_api = CallAPI()
+            call_api = CallAPI(
+                session=run_service.session,
+                job_detail_service=run_service.job_detail_service,
+                account_service=run_service.accountService
+            )
             scheduled_tasks = run_service.schedule_startup(Utils.select_enabled_indices(), call_api.run)
             # 遍历打印每个已调度账号的信息
             for account_key, delay, timer in scheduled_tasks:
