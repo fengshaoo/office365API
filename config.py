@@ -26,13 +26,13 @@ class Config:
     TELEGRAM_MESSAGE_STATUS = True  # Telegram通知生效状态
     # ---------------------------------------------------------------
 
+    ENV_MODE = None                 # 运行环境
     LOG_FILENAME = "auto_run_office365" # 默认日志文件名称
 
     APP_NUM = 1                     # 操作账号数量（默认单账号模式）
     ENABLE_NUM = -1                 # 启用账号数量（默认-1表示全部启用）
     MIN_START_DELAY = 0             # 最小开始延迟时间（s）
-    # TODO 调试处理
-    MAX_START_DELAY = 10           # 最大开始延迟时间（s）
+    MAX_START_DELAY = 300           # 最大开始延迟时间（s）
     REQUEST_DELAY_MIN = 1           # 最小请求延迟时间（s）
     REQUEST_DELAY_MAX = 5           # 最大请求延迟时间（s）
     FAILURE_SIMULATION_PROB = 0.08  # 失败模拟概率（整体），控制在 0.05~0.1
@@ -147,9 +147,13 @@ class Config:
             setattr(cls, key, val)  # 反射设置字段值
 
         # 账号相关配置
-        # cls.APP_NUM = int(os.getenv("APP_NUM", cls.APP_NUM))
-        # TODO 临时调试
-        cls.APP_NUM = 1
+        env_app_num = os.getenv("APP_NUM")
+        if env_app_num:
+            if env_app_num.isdigit():
+                cls.APP_NUM = int(env_app_num)
+            else:
+                raise ValueError(f"环境变量 APP_NUM 配置错误，请检查配置项并重新启动")
+
         if cls.APP_NUM == 1:
             logging.info("单账号模式")
         if cls.ENABLE_NUM != -1 and cls.ENABLE_NUM > cls.APP_NUM:
@@ -161,8 +165,6 @@ class Config:
             if token is None:
                 raise ValueError(f"环境变量 `{key}` 缺失或账号数量(APP_NUM)配置错误，请检查配置项并重新启动，当前 APP_NUM = {cls.APP_NUM}")
             cls.USER_TOKEN_DICT[key] = token
-
-        # TODO 后续配合多线程，为每个账号分配一个线程进行调用，带有延迟时间，防止同一时间大量账号同时启动
 
         # 选配字段设置
         cls.LOG_SERVER_URL = os.getenv("LOG_SERVER_URL", cls.LOG_SERVER_URL)
@@ -180,3 +182,14 @@ class Config:
             logging.warning("未启用 Telegram 通知")
             if cls.USER_EMAIL is None:
                 raise ValueError("无法启用通知功能，Tel & Email 均未配置")
+
+        # 配置调试环境
+        cls.ENV_MODE = os.getenv("ENV_MODE")
+        if cls.ENV_MODE == "DEBUG":
+            logging.warning("调试环境")
+            cls.MIN_START_DELAY = 0
+            cls.MAX_START_DELAY = 3
+            cls.PROXIES = []
+            cls.USER_AGENT_LIST = [
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.119 Safari/537.36",
+            ]

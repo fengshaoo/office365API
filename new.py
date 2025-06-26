@@ -1,9 +1,11 @@
 # -*- coding: UTF-8 -*-
+import sys
 import time
 import logging
-from datetime import datetime, timezone, timedelta
-
+import random
+import threading
 import requests
+from datetime import datetime, timezone, timedelta
 
 from config import Config
 from configuration.custom_session import CustomSession
@@ -127,7 +129,7 @@ class API(object):
             'refresh_token': refresh_token,
             'client_id': client_id,
             'client_secret': client_secret,
-            'redirect_uri': 'http://localhost:53682/',
+            'redirect_uri': Config.REDIRECT_URI,
             "scope": "https://graph.microsoft.com/.default"
         }
 
@@ -144,7 +146,7 @@ class API(object):
         resp.raise_for_status()
         return resp.json()
 
-    def fetch_user_info(self, access_token):
+    def fetch_user_info(self, access_token, user_agent):
         """
         用 access_token 调用用户信息接口，例如 Microsoft Graph /me
         返回 JSON dict；若失败抛异常或返回 None
@@ -152,7 +154,10 @@ class API(object):
         headers = {'Authorization': f'Bearer {access_token}'}
         resp = self.session.get(
             "https://graph.microsoft.com/v1.0/me",
-            headers=headers,
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "User-Agent": user_agent,
+            },
             timeout=10
         )
         resp.raise_for_status()
@@ -203,7 +208,7 @@ class API(object):
             if expires_at > Utils.get_beijing_time(10):
                 # 尝试获取用户信息
                 try:
-                    user_info = self.fetch_user_info(access_token)
+                    user_info = self.fetch_user_info(access_token, user_agent)
                     valid_access = True
                 except requests.exceptions.HTTPError as e:
                     response = e.response
@@ -215,6 +220,7 @@ class API(object):
             token_data = self.getmstoken(client_id, client_secret, refresh_token, proxy, user_agent)
             access_token = token_data.get("access_token")
             expires_at = Utils.get_beijing_time(int(token_data.get("expires_in")))
+            self.logger.info("刷新成功")
 
             # 更新数据库
             if db_url is not None:
@@ -226,7 +232,7 @@ class API(object):
                 )
             # 重新获取用户信息
             try:
-                user_info = self.fetch_user_info(access_token)
+                user_info = self.fetch_user_info(access_token, user_agent)
             except Exception as e:
                 raise BasicException(ErrorCode.INVOKE_API_ERROR, extra=e)
 
@@ -241,8 +247,12 @@ class API(object):
             # 1.登陆
             self.logger.info("用户登陆")
             access_token, user_info = self.get_access_and_userinfo(account_key, refresh_token, proxy, user_agent)
-            self.logger.info(f"已获取用户信息：access_token: ******, user_info: {user_info}")
-            self.logger.info("调试终止程序")
+            # self.logger.info(f"已获取用户信息：access_token: ******, user_info: {user_info}")
+
+
+            if Config.ENV_MODE == "DEBUG":
+                self.logger.info("调试终止程序")
+                sys.exit()
         except Exception as e:
             raise BasicException(ErrorCode.MAIN_LOGICAL_ERROR, extra=e)
 
@@ -258,6 +268,71 @@ class API(object):
         pass
 
 
+def select_enabled_indices():
+    """
+    根据 ENABLE_NUM 随机选择若干账号，返回索引列表。
+    索引对应 USER_TOKEN_DICT keys 的顺序，顺序随机。
+    例如返回 [0,2,5] 表示选中字典中第 0、2、5 个 key。
+    """
+    if Config.ENABLE_NUM == -1:
+        # 随机打乱全部索引顺序返回
+        indices = list(range(Config.APP_NUM))
+    else:
+        indices = random.sample(range(Config.APP_NUM), Config.ENABLE_NUM)
+    random.shuffle(indices)
+    return indices
+
+
+def schedule_startup(enabled_indices, startup_func, *args, **kwargs):
+    """
+    enabled_indices: list of indices (对应 USER_TOKEN_DICT keys 的顺序)
+    startup_func: 要启动账号时调用的函数，签名如 func(account_key, refresh_token, ...)
+    args, kwargs: 额外传给 startup_func 的参数
+
+    调度所有账号在 Config.MAX_START_TIME 内启动，使用 threading.Timer。
+    """
+    total = len(enabled_indices)
+    if total == 0:
+        return []
+
+    interval = Config.MAX_START_DELAY / total
+    # keys 顺序
+    keys = list(Config.USER_TOKEN_DICT.keys())
+    scheduled = []  # 存放 (account_key, delay, timer_obj)
+
+    for idx_pos, idx in enumerate(enabled_indices):
+        # idx_pos in [0, total-1], idx 是 USER_TOKEN_DICT 的索引
+        start = idx_pos * interval
+        end = (idx_pos + 1) * interval
+        delay = random.uniform(start, end)
+        account_key = keys[idx]
+        refresh_token = Config.USER_TOKEN_DICT[account_key]
+
+        # 随机选择 proxy 和 UA
+        proxy = random.choice(Config.PROXIES) if Config.PROXIES else None
+        user_agent = random.choice(Config.USER_AGENT_LIST) if Config.USER_AGENT_LIST else None
+
+        # 定义调用：用 lambda 捕获当前变量
+        timer = threading.Timer(
+            delay,
+            startup_func,
+            args=(account_key, refresh_token, proxy, user_agent, *args),
+            kwargs=kwargs
+        )
+        timer.daemon = False  # 主线程等待
+        timer.start()
+        scheduled.append((account_key, delay, timer))
+        logging.info(f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}")
+
+    for item in scheduled:
+        timer = item[2]
+        timer.join()
+
+    return scheduled
+
+
+
+
 def entrance():
     time_formate = "%Y-%m-%d %H:%M:%S"
     start_time = time.time()
@@ -265,7 +340,7 @@ def entrance():
 
     try:
         with API() as api:
-            scheduled_tasks = Utils.schedule_startup(Utils.select_enabled_indices(), api.run)
+            scheduled_tasks = schedule_startup(select_enabled_indices(), api.run)
             # 遍历打印每个已调度账号的信息
             for account_key, delay, timer in scheduled_tasks:
                 print(f"账号 {account_key} 计时器对象: {timer}")
