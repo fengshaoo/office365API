@@ -59,10 +59,11 @@ jobs:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       run: |
         : "${SSH_PRIVATE_KEY:?Environment variable SSH_PRIVATE_KEY is not set}"
-        : "${LOG_SERVER_HOST:?Environment variable LOG_SERVER_HOST is not set}"
-        : "${LOG_SERVER_USER:?Environment variable LOG_SERVER_USER is not set}"
-        : "${LOG_FILE_PATH:?Environment variable LOG_FILE_PATH is not set}"
-        : "${LOG_FILENAME:?Environment variable LOG_FILENAME is not set}"
+        
+        LOG_SERVER_USER="${LOG_SERVER_URL%%@*}"
+        LOG_SERVER_HOST_PATH="${LOG_SERVER_URL#*@}"
+        LOG_SERVER_HOST="${LOG_SERVER_HOST_PATH%%/*}"
+        LOG_FILE_PATH="/${LOG_SERVER_HOST_PATH#*/}"
 
         mkdir -p ~/.ssh
         echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
@@ -72,7 +73,7 @@ jobs:
         LOG_DATE=$(date +'%m%d%H%M')
         mv ${LOG_FILENAME}.log ${LOG_FILENAME}_${LOG_DATE}.log
 
-        scp ${LOG_FILENAME}_${LOG_DATE}.log "${LOG_SERVER_USER}@${LOG_SERVER_HOST}:${LOG_FILE_PATH}"
+        scp -q ${LOG_FILENAME}_${LOG_DATE}.log "${LOG_SERVER_USER}@${LOG_SERVER_HOST}:${LOG_FILE_PATH}"
         
         echo "Log file uploaded successfully."
 
