@@ -6,6 +6,9 @@ class NoParamsFilter(logging.Filter):
     禁止SQL输出参数
     """
     def filter(self, record):
-        # return 'parameters' not in record.getMessage().lower()
-
-        return not isinstance(record.args, dict)
+        msg = record.getMessage().lower()
+        if 'parameters' in msg:
+            return False
+        if msg.startswith("[generated in"):
+            return False
+        return True
