@@ -3,6 +3,8 @@ import copy
 import requests
 
 from config import Config
+from dao.account_service import AccountService
+
 
 class CSession(requests.Session):
     def __init__(self, proxy=None, user_agent=None):
@@ -54,5 +56,10 @@ def rua():
     print(resp.request.headers)
     print(resp.json())
 
+def db_test():
+    accountService = AccountService()
+    accountService.get_by_env_name("MS_TOKEN")
+
 if __name__ == "__main__":
-    getmstoken("aaa", "bbb", "ccc", None, None)
+    # getmstoken("aaa", "bbb", "ccc", None, None)
+    db_test()

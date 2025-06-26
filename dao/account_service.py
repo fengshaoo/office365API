@@ -7,11 +7,15 @@ class AccountService(BaseDBSession):
     def __init__(self, database_url: str = None):
         super().__init__(database_url)
 
-    def get_by_env_name(self, env_name: int):
+    def get_by_env_name(self, env_name: str):
         with self.get_session() as session:
             result = session.query(Account).filter(Account.env_name == env_name).first()
             if result:
-                return result
+                # 手动构造一个脱离 session 的 Account 对象
+                account = Account()
+                for column in Account.__table__.columns:
+                    setattr(account, column.name, getattr(result, column.name))
+                return account
             return None
 
     def insert(self, account: Account):
