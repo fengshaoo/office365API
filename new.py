@@ -180,10 +180,10 @@ class API(object):
         if db_url is None or db_rec is None:
             token_data = self.getmstoken(client_id, client_secret, refresh_token, proxy, user_agent)
             access_token = token_data.get("access_token")
-            expires_at = datetime.now(timezone.utc) + timedelta(seconds=int(token_data.get("expires_in")))
+            expires_at = Utils.get_beijing_time(int(token_data.get("expires_in")))
         else:
             access_token = db_rec.access_token
-            expires_at = db_rec.expires_at
+            expires_at = Utils.to_beijing_time(db_rec.expires_at)
 
         # 存储本次获取的信息
         if db_url is not None and db_rec is None:
@@ -200,7 +200,7 @@ class API(object):
         valid_access = False
         if access_token and expires_at:
             # 若在未来且剩余时间>10秒，视为有效；否则视为过期
-            if expires_at > datetime.now(timezone.utc) + timedelta(seconds=10):
+            if expires_at > Utils.get_beijing_time(10):
                 # 尝试获取用户信息
                 try:
                     user_info = self.fetch_user_info(access_token)
@@ -214,7 +214,7 @@ class API(object):
             # 刷新
             token_data = self.getmstoken(client_id, client_secret, refresh_token, proxy, user_agent)
             access_token = token_data.get("access_token")
-            expires_at = datetime.now(timezone.utc) + timedelta(seconds=int(token_data.get("expires_in")))
+            expires_at = Utils.get_beijing_time(int(token_data.get("expires_in")))
 
             # 更新数据库
             if db_url is not None:

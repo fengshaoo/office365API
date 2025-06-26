@@ -1,5 +1,6 @@
 import argparse
 import threading
+from datetime import datetime, timezone, timedelta
 
 import requests
 import copy
@@ -162,6 +163,29 @@ class Utils:
 
         job_id = timestamp_str + random_part
         return job_id[:16]
+
+    @staticmethod
+    def to_beijing_time(dt: datetime) -> datetime:
+        """
+        将任意 datetime 转换为北京时间（UTC+8）。
+        :param dt: 要转换的时间
+        :return: 北京时间
+        """
+        if dt.tzinfo is None:
+            # naive 时间，假定为 UTC 时间
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone(timedelta(hours=8)))
+
+    @staticmethod
+    def get_beijing_time(offset_seconds: int = 0) -> datetime:
+        """
+        获取当前时间指定偏移秒数的北京时间
+        :param offset_seconds: 基于当前时间的偏移秒数
+        :return: 北京时间
+        """
+        utc_now = datetime.now(timezone.utc) + timedelta(seconds=offset_seconds)
+        beijing_time = utc_now.astimezone(timezone(timedelta(hours=8)))
+        return beijing_time
 
 
 
