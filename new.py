@@ -357,7 +357,7 @@ def entrance():
             scheduled_tasks = run_service.schedule_startup(Utils.select_enabled_indices(), call_api.run)
             # 遍历打印每个已调度账号的信息
             for account_key, delay, timer in scheduled_tasks:
-                print(f"账号 {account_key} 计时器对象: {timer}")
+                logging.info(f"账号 {account_key} 计时器对象: {timer}")
 
     except Exception as e:
         logging.error(e)
