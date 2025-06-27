@@ -4,8 +4,8 @@ name: CI
 
 on:
 #  当发布一个 Release 且状态为 “published” 时触发
-#  release:
-#    types: [published]
+  release:
+    types: [published]
 #   当 push 的 tag 以 v 开头（例如 v1.0、v2.3）时触发
 #  push:
 #    tags:
