@@ -361,7 +361,7 @@ class CallAPI(object):
 
         f2 = Foo()
         if f2.count != 0:
-            Utils.send_message(f2.count, run_times)
+            Utils.send_message(f2.count, run_times, self.session)
 
 
 
