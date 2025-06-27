@@ -61,57 +61,26 @@ class Config:
     }
 
     # ----------------------- 已启用配置区域 -----------------------
-    # '是否开启备用应用':'N','是否开启测试':'N'
-    config_list = {
-        '每次轮数': 6,
-        '是否启动随机时间': 'Y', '延时范围起始': 60, '结束': 120,
-        '是否开启随机api顺序': 'Y',
-        '是否开启各api延时': 'N', 'api延时范围开始': 2, 'api延时结束': 5,
-        '是否开启各账号延时': 'N', '账号延时范围开始': 60, '账号延时结束': 120,
-
-        'ROUNDS_PER_RUN': 6,
-        'ENABLE_RANDOM_START_DELAY': 'Y',
-        'START_DELAY_MIN': 60,
-        'START_DELAY_MAX': 120,
-
-        'ENABLE_RANDOM_API_ORDER': 'Y',
-
-        'ENABLE_API_DELAY': 'N',
-        'API_DELAY_MIN': 2,
-        'API_DELAY_MAX': 5,
-
-        'ENABLE_ACCOUNT_DELAY': False,
-        'ACCOUNT_DELAY_MIN': 60,
-        'ACCOUNT_DELAY_MAX': 120,
-
-        'summary': 'Office365API调用提醒',
-        'contentType': 1
-    }
-
+    # 调用轮数
     ROUNDS_PER_RUN = 6
 
+    # 每轮启动延时
     ENABLE_RANDOM_START_DELAY = True
-    START_DELAY_MIN = 60
-    START_DELAY_MAX = 120
+    ROUNDS_PER_DELAY_MIN = 20
+    ROUNDS_PER_DELAY_MAX = 300
 
+    # 随机API调用顺序
     ENABLE_RANDOM_API_ORDER = True
 
+    # API调用延迟（防止API同一时间大量连续被访问）
     ENABLE_API_DELAY = True
     API_DELAY_MIN = 2
     API_DELAY_MAX = 5
-
-    ENABLE_ACCOUNT_DELAY = False
-    ACCOUNT_DELAY_MIN = 60
-    ACCOUNT_DELAY_MAX = 120
-
-    SUMMARY = 'Office365API Call Reminder'
-    CONTENT_TYPE = 1
 
     # 账号列表
     USER_TOKEN_DICT = {
         "MS_TOKEN": ""
     }
-
 
     # TODO 下列配置列表后续改为数据库查询
     # 代理列表：若需模拟真实网络环境或绕过网络限制，可在环境变量中提供代理地址列表，或留空。

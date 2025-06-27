@@ -295,10 +295,6 @@ class CallAPI(object):
         return access_token, user_info
 
     def run_api(self, api_list, account_token, user_agent, a, c):
-        # headers = {
-        #     'Authorization': f"Bearer {account_token}"
-        #     'Content-Type': 'application/json'
-        # }
         f1 = Foo()  # 实例化计数器
         for a in range(len(api_list)):
             try:
@@ -321,7 +317,7 @@ class CallAPI(object):
                     if c == 1:  # 仅统计一轮错误次数
                         f1.count = f1.count + 1
             except Exception as e:
-                raise BasicException(ErrorCode.MAIN_LOGICAL_ERROR, extra=e)
+                self.logger.error(f"核心逻辑错误：API 调用失败 - {Config.API_LIST[api_list[a]]}, Detail: [{e}]")
 
 
 
@@ -333,11 +329,8 @@ class CallAPI(object):
         for c in range(1, Config.ROUNDS_PER_RUN + 1):
             if Config.ENABLE_RANDOM_START_DELAY:
                 time.sleep(random.randint(
-                    Config.MIN_START_DELAY, Config.MAX_START_DELAY))
+                    Config.ROUNDS_PER_DELAY_MIN, Config.ROUNDS_PER_DELAY_MAX))
             for a in range(1, int(Config.APP_NUM) + 1):
-                if Config.ENABLE_ACCOUNT_DELAY:
-                    time.sleep(random.randint(
-                        Config.ACCOUNT_DELAY_MIN, Config.ACCOUNT_DELAY_MAX))
                 self.logger.info('\n' + '应用/账号 ' + str(a) + ' 的第' + str(c) + '轮' +
                       time.asctime(time.localtime(time.time())) + '\n')
                 if Config.ENABLE_RANDOM_API_ORDER:
