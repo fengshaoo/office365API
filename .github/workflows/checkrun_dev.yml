@@ -1,17 +1,20 @@
 name: AUTO_RUN
 
 on:
-  schedule:
-    - cron: '0 8-18 * * 1-6'
+  watch:
+    types: [started]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Shanghai
-      ENV_MODE: 'PROD'
+      ENV_MODE: 'DEBUG'
 
-    if: (github.event_name == 'schedule') && (github.ref == 'refs/heads/main')
+    if: |
+      github.event.repository.owner.id == github.event.sender.id &&
+      github.repository == 'SherlockFloyd/office365API' &&
+      github.ref == 'refs/heads/dev'
 
     steps:
     - name: Checkout
@@ -28,7 +31,6 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run API
-      continue-on-error: true
       env:
         # GitHub 的账号信息
         GH_REPO: ${{ github.repository }}

@@ -216,6 +216,13 @@ class Config:
             logging.warning("调试环境")
             cls.MIN_START_DELAY = 0
             cls.MAX_START_DELAY = 3
+
+            cls.ROUNDS_PER_RUN = 1
+            cls.ENABLE_RANDOM_START_DELAY = False
+            cls.ENABLE_API_DELAY = True
+            cls.API_DELAY_MIN = 1
+            cls.API_DELAY_MAX = 10
+
             cls.PROXIES = []
             cls.USER_AGENT_LIST = [
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.119 Safari/537.36",
