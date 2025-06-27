@@ -197,9 +197,6 @@ class Utils:
 
 
 
-
-
-
 if __name__ == "__main__":
     CLogger.setup_logger()
     parser = argparse.ArgumentParser()
