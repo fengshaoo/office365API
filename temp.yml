@@ -3,6 +3,8 @@ name: AUTO_RUN
 on:
   watch:
     types: [started]
+#  schedule:
+#    - cron: '0 8-18 * * 1-6'
 
 jobs:
   build:
@@ -12,7 +14,10 @@ jobs:
       ENV_MODE: 'PROD'
 
     if: |
-      github.event.repository.owner.id == github.event.sender.id
+#      github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+      github.event.repository.owner.id == github.event.sender.id &&
+      github.repository == 'SherlockFloyd/office365API' &&
+      github.ref == 'refs/heads/main'
 
     steps:
     - name: Checkout
