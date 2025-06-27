@@ -25,7 +25,7 @@ class Utils:
     工具类
     """
     @staticmethod
-    def sendmessage(i, run_times):
+    def sendmessage_temp(i, run_times):
         """
         出现错误时发送错误消息
         :param i: 错误次数
@@ -49,6 +49,38 @@ class Utils:
         else:
             # TODO 若telegram失效则启用邮件通知
             pass
+
+    @staticmethod
+    def fix_list():
+        # 随机api序列
+        fixed_api = [0, 1, 5, 6, 20, 21]
+        # 保证抽取到outlook,onedrive的api
+        ex_api = [2, 3, 4, 7, 8, 9, 10, 22, 23, 24, 25,
+                  26, 27, 13, 14, 15, 16, 17, 18, 19, 11, 12]
+        # 额外抽取填充的api
+        fixed_api.extend(random.sample(ex_api, 6))
+        random.shuffle(fixed_api)
+        return fixed_api
+
+    # 出现失败情况时发送通知信息
+    @staticmethod
+    def send_message(i, run_times):
+        a = 12 - i
+        local_time = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        # Telegram 提醒功能，通过GET方法实现
+        telegram_url = Config.TELEGRAM_URL
+        telegram_token = os.getenv("TELEGRAM_TOKEN")
+        telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
+        if i != 12:
+            telegram_text = "Office365AutoAPI调用存在异常情况！\n调用总数： 12 \n成功个数： {} \n失败个数： {} \n调用持续时长为： {}时{}分{}秒 \n调用时间： {} (UTC) ".format(
+                a, i, run_times[0], run_times[1], run_times[2], local_time)
+        else:
+            telegram_text = "Office365调用token失效，请及时更新token！\n调用总数： 12 \n成功个数： {} \n失败个数： {} \n调用持续时长为： {}时{}分{}秒 \n调用时间： {} (UTC) ".format(
+                a, i, run_times[0], run_times[1], run_times[2], local_time)
+
+        telegram_address = telegram_url + telegram_token + "/sendMessage?chat_id=-" + telegram_chat_id + "&text=" + telegram_text
+        requests.get(telegram_address)
 
 
     @staticmethod

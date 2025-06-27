@@ -3,16 +3,22 @@ name: AUTO_RUN
 on:
   watch:
     types: [started]
+#  schedule:
+#    - cron: '0 8-18 * * 1-6'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Shanghai
-      ENV_MODE: ${{ github.event.repository.owner.id == github.event.sender.id && 'DEBUG' || 'PROD' }}
+      ENV_MODE: 'PROD'
 
-#    只有当发起操作的人是这个仓库的拥有者时才会执行（防止 PR 滥用）
-    if: github.event.repository.owner.id == github.event.sender.id
+    if: |
+#      github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+      github.event.repository.owner.id == github.event.sender.id &&
+      github.repository == 'SherlockFloyd/office365API' &&
+      github.ref == 'refs/heads/main'
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -47,7 +53,7 @@ jobs:
         : "${MS_TOKEN:?Environment variable MS_TOKEN is not set}"
         : "${CLIENT_ID:?Environment variable CLIENT_ID is not set}"
         : "${CLIENT_SECRET:?Environment variable CLIENT_SECRET is not set}"
-        python new.py
+        python index.py
         chmod +x /tmp/github_mask.sh
         bash /tmp/github_mask.sh || true
 

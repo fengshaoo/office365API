@@ -34,7 +34,7 @@ class Config:
 
     APP_NUM = 1                     # 操作账号数量（默认单账号模式）
     ENABLE_NUM = -1                 # 启用账号数量（默认-1表示全部启用）
-    MIN_START_DELAY = 0             # 最小开始延迟时间（s）
+    MIN_START_DELAY = 60            # 最小开始延迟时间（s）
     MAX_START_DELAY = 300           # 最大开始延迟时间（s）
     REQUEST_DELAY_MIN = 1           # 最小请求延迟时间（s）
     REQUEST_DELAY_MAX = 5           # 最大请求延迟时间（s）
@@ -69,9 +69,43 @@ class Config:
         '是否开启各api延时': 'N', 'api延时范围开始': 2, 'api延时结束': 5,
         '是否开启各账号延时': 'N', '账号延时范围开始': 60, '账号延时结束': 120,
 
+        'ROUNDS_PER_RUN': 6,
+        'ENABLE_RANDOM_START_DELAY': 'Y',
+        'START_DELAY_MIN': 60,
+        'START_DELAY_MAX': 120,
+
+        'ENABLE_RANDOM_API_ORDER': 'Y',
+
+        'ENABLE_API_DELAY': 'N',
+        'API_DELAY_MIN': 2,
+        'API_DELAY_MAX': 5,
+
+        'ENABLE_ACCOUNT_DELAY': False,
+        'ACCOUNT_DELAY_MIN': 60,
+        'ACCOUNT_DELAY_MAX': 120,
+
         'summary': 'Office365API调用提醒',
         'contentType': 1
     }
+
+    ROUNDS_PER_RUN = 6
+
+    ENABLE_RANDOM_START_DELAY = True
+    START_DELAY_MIN = 60
+    START_DELAY_MAX = 120
+
+    ENABLE_RANDOM_API_ORDER = True
+
+    ENABLE_API_DELAY = True
+    API_DELAY_MIN = 2
+    API_DELAY_MAX = 5
+
+    ENABLE_ACCOUNT_DELAY = False
+    ACCOUNT_DELAY_MIN = 60
+    ACCOUNT_DELAY_MAX = 120
+
+    SUMMARY = 'Office365API Call Reminder'
+    CONTENT_TYPE = 1
 
     # 账号列表
     USER_TOKEN_DICT = {
