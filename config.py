@@ -34,9 +34,8 @@ class Config:
 
     APP_NUM = 1                     # 操作账号数量（默认单账号模式）
     ENABLE_NUM = -1                 # 启用账号数量（默认-1表示全部启用）
-    # TODO 临时调试
-    MIN_START_DELAY = 0            # 最小开始延迟时间（s）
-    MAX_START_DELAY = 10           # 最大开始延迟时间（s）
+    MIN_START_DELAY = 20            # 最小开始延迟时间（s）
+    MAX_START_DELAY = 100           # 最大开始延迟时间（s）
     REQUEST_DELAY_MIN = 1           # 最小请求延迟时间（s）
     REQUEST_DELAY_MAX = 5           # 最大请求延迟时间（s）
     FAILURE_SIMULATION_PROB = 0.08  # 失败模拟概率（整体），控制在 0.05~0.1
@@ -68,7 +67,7 @@ class Config:
     # 每轮启动延时
     ENABLE_RANDOM_START_DELAY = True
     ROUNDS_PER_DELAY_MIN = 20
-    ROUNDS_PER_DELAY_MAX = 300
+    ROUNDS_PER_DELAY_MAX = 500
 
     # 随机API调用顺序
     ENABLE_RANDOM_API_ORDER = True

@@ -6,8 +6,11 @@ import random
 import threading
 import requests
 from datetime import datetime, timezone, timedelta
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 
 from config import Config
+from configuration.base_db_session import BaseDBSession
 from configuration.custom_session import CustomSession
 from dao.account_service import AccountService
 from dao.job_detail_service import JobDetailService
@@ -140,6 +143,11 @@ class RunService(object):
             scheduled.append((account_key, delay, timer))
             logging.info(
                 f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}")
+
+        # 添加数据保活定时任务
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(BaseDBSession.keep_alive, IntervalTrigger(seconds=300), name="db_keep_alive")
+        scheduler.start()
 
         for item in scheduled:
             timer = item[2]

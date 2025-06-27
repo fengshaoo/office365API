@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import make_url
@@ -27,8 +27,14 @@ class BaseDBSession:
         if not BaseDBSession._engine:
             database_url = database_url or Config.DATABASE_URL
             db_url = make_url(f"mysql+pymysql://{database_url}")
-            BaseDBSession._engine = create_engine(db_url, pool_pre_ping=True)
+            BaseDBSession._engine = create_engine(db_url, pool_pre_ping=True, pool_recycle=3600)
             BaseDBSession._SessionFactory = sessionmaker(bind=BaseDBSession._engine)
+
+    @classmethod
+    def keep_alive(cls):
+        logging.info("数据库保活")
+        with cls.get_session() as session:
+            session.execute(text("SELECT 1"))
 
     @contextmanager
     def get_session(self):
