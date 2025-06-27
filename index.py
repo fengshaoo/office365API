@@ -147,6 +147,7 @@ class RunService(object):
 
         self.logger.info("退出任务调用")
         try:
+            self.logger.info("尝试更新数据库信息")
             self.job_detail_service.update_process(self.job_id, "exit_RunService")
         except Exception as e:
             raise BasicException(ErrorCode.UPDATE_DATABASE_ERROR, extra=e)
@@ -297,6 +298,8 @@ class CallAPI(object):
     def run_api(self, api_list, account_token, user_agent, a, c):
         f1 = Foo()  # 实例化计数器
         for a in range(len(api_list)):
+            if Config.ENABLE_API_DELAY:
+                time.sleep(random.randint(Config.API_DELAY_MIN, Config.API_DELAY_MAX))
             try:
                 resp = self.session.get(
                     Config.API_LIST[api_list[a]],
@@ -308,12 +311,8 @@ class CallAPI(object):
                 )
                 if resp.status_code == 200:
                     self.logger.info('第' + str(api_list[a]) + "号api调用成功")
-
-                    if Config.ENABLE_API_DELAY:
-                        time.sleep(random.randint(
-                            Config.API_DELAY_MIN, Config.API_DELAY_MAX))
                 else:
-                    self.logger.info('第' + str(api_list[a]) + "号api调用失败")
+                    self.logger.info(f"第 {str(api_list[a])} 号api调用失败, Detail: {resp.json}")
                     if c == 1:  # 仅统计一轮错误次数
                         f1.count = f1.count + 1
             except Exception as e:
@@ -341,6 +340,7 @@ class CallAPI(object):
                     self.logger.info("原版顺序,共10个api")
                     api_list = [5, 9, 8, 1, 20, 24, 23, 6, 21, 22]
                     self.run_api(api_list, account_token, user_agent, a, c)
+            self.logger.info("本轮结束，等待启动下一轮")
 
 
         end_time = time.time()  # 统计时间结束
