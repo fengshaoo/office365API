@@ -10,7 +10,7 @@ class Config:
     配置类
     存放所有的配置项
     """
-    # 必配项目 -------------------------------------------------------
+    # --------------------------- 必配项目 ----------------------------
     CLIENT_ID = None                # Azure 应用 Client ID
     CLIENT_SECRET = None            # Azure 应用 Client Secret
     # TENANT_ID = None                # Azure AD 租户 ID
@@ -18,7 +18,7 @@ class Config:
     GH_TOKEN = None                 # GitHub token
     # ---------------------------------------------------------------
 
-    # 选配项目 -------------------------------------------------------
+    # --------------------------- 选配项目 ----------------------------
     LOG_SERVER_URL = None           # 日志服务器连接属性,格式:user@host/file_path
     DATABASE_URL = None             # 数据库连接属性,格式:user:password@host:port/dbname
 
@@ -29,13 +29,28 @@ class Config:
     TELEGRAM_MESSAGE_STATUS = True  # Telegram通知生效状态
     # ---------------------------------------------------------------
 
+    # ------------------------- 已启用配置区域 -------------------------
     ENV_MODE = None                 # 运行环境
     LOG_FILENAME = "auto_run_office365" # 默认日志文件名称
-
     APP_NUM = 1                     # 操作账号数量（默认单账号模式）
     ENABLE_NUM = -1                 # 启用账号数量（默认-1表示全部启用）
     MIN_START_DELAY = 20            # 最小开始延迟时间（s）
     MAX_START_DELAY = 100           # 最大开始延迟时间（s）
+
+
+    ROUNDS_PER_RUN = 6              # 调用轮数
+    ENABLE_RANDOM_API_ORDER = True  # 随机API调用顺序
+
+    ENABLE_RANDOM_START_DELAY = True  # 每轮启动延时
+    ROUNDS_PER_DELAY_MIN = 60
+    ROUNDS_PER_DELAY_MAX = 500
+
+    ENABLE_API_DELAY = True         # API调用延迟（防止API同一时间大量连续被访问）
+    API_DELAY_MIN = 5
+    API_DELAY_MAX = 20
+    # ---------------------------------------------------------------
+
+    # ------------------------- 未启用配置区域 -------------------------
     REQUEST_DELAY_MIN = 1           # 最小请求延迟时间（s）
     REQUEST_DELAY_MAX = 5           # 最大请求延迟时间（s）
     FAILURE_SIMULATION_PROB = 0.08  # 失败模拟概率（整体），控制在 0.05~0.1
@@ -43,6 +58,9 @@ class Config:
     REQUEST_TIMEOUT = 10            # 请求超时秒数
     MAX_RETRIES = 3                 # 最大重试次数
     BASE_BACKOFF = 5                # 基础退避
+    # ---------------------------------------------------------------
+
+    # ------------------------- 自动配置区域 ---------------------------
     # 微软校验用的重定向地址，与Azure应用配置保持一致
     REDIRECT_URI = "http://localhost:53682/"
     # 获取access_token的请求端点
@@ -60,22 +78,6 @@ class Config:
 
     }
 
-    # ----------------------- 已启用配置区域 -----------------------
-    # 调用轮数
-    ROUNDS_PER_RUN = 1
-
-    # 每轮启动延时
-    ENABLE_RANDOM_START_DELAY = True
-    ROUNDS_PER_DELAY_MIN = 20
-    ROUNDS_PER_DELAY_MAX = 500
-
-    # 随机API调用顺序
-    ENABLE_RANDOM_API_ORDER = True
-
-    # API调用延迟（防止API同一时间大量连续被访问）
-    ENABLE_API_DELAY = True
-    API_DELAY_MIN = 2
-    API_DELAY_MAX = 5
 
     # 账号列表
     USER_TOKEN_DICT = {
@@ -135,6 +137,9 @@ class Config:
         r'https://graph.microsoft.com/v1.0/me/messages?$search="hello world"',
         r'https://graph.microsoft.com/beta/me/messages?$select=internetMessageHeaders&$top',
     ]
+    # ---------------------------------------------------------------
+
+
 
     _initialized = False
 

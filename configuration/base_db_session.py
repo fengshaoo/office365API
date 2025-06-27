@@ -33,8 +33,12 @@ class BaseDBSession:
     @classmethod
     def keep_alive(cls):
         logging.info("数据库保活")
-        with cls.get_session() as session:
+        try:
+            session = cls._SessionFactory()
             session.execute(text("SELECT 1"))
+        except Exception as e:
+            raise BasicException(ErrorCode.DB_ERROR, extra=e)
+
 
     @contextmanager
     def get_session(self):

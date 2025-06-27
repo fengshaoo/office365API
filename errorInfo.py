@@ -19,7 +19,7 @@ class ErrorCode:
         INIT_ENVIRONMENT_ERROR: (1100, "初始化环境变量失败"),
         WRITE_FILE_ERROR: (1105, "写入 GITHUB_ENV 文件失败"),
         DATABASE_CONNECT_ERROR: (1110, "数据库连接失败"),
-        DB_ERROR: (111, "数据库错误"),
+        DB_ERROR: (1115, "数据库错误"),
         UPDATE_DATABASE_ERROR: (2100, "更新数据库失败"),
         INVOKE_API_ERROR: (3100, "外部API调用失败"),
         MAIN_LOGICAL_ERROR: (3105, "主程序逻辑错误"),
