@@ -10,7 +10,14 @@ class JobDetailService(BaseDBSession):
 
     def get_by_id(self, job_id: int):
         with self.get_session() as session:
-            return session.query(JobDetail).filter(JobDetail.id == job_id).first()
+            result = session.query(JobDetail).filter(JobDetail.id == job_id).first()
+            if result:
+                # 手动构造一个脱离 session 的 Account 对象
+                job_detail = JobDetail()
+                for column in JobDetail.__table__.columns:
+                    setattr(job_detail, column.name, getattr(result, column.name))
+                return job_detail
+            return None
 
     def create_job(self, job: JobDetail):
         with self.get_session() as session:

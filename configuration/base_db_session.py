@@ -27,7 +27,16 @@ class BaseDBSession:
         if not BaseDBSession._engine:
             database_url = database_url or Config.DATABASE_URL
             db_url = make_url(f"mysql+pymysql://{database_url}")
-            BaseDBSession._engine = create_engine(db_url, pool_pre_ping=True, pool_recycle=3600)
+            BaseDBSession._engine = create_engine(
+                db_url,
+                pool_size=5,
+                max_overflow=10,
+                pool_pre_ping=True,
+                pool_recycle=3600,
+
+                echo=True,
+                hide_parameters=True,
+            )
             BaseDBSession._SessionFactory = sessionmaker(bind=BaseDBSession._engine)
 
     @classmethod
