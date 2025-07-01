@@ -32,7 +32,7 @@ class BaseDBSession:
                 pool_size=5,
                 max_overflow=10,
                 pool_pre_ping=True,
-                pool_recycle=3600,
+                pool_recycle=1800,
 
                 # TODO 其他地方配合该处隐藏参数
                 hide_parameters=True

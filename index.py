@@ -145,9 +145,9 @@ class RunService(object):
                 f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}")
 
         # 添加数据保活定时任务
-        scheduler = BackgroundScheduler(daemon=True)  # 保活任务为守护线程，主线程退出时自动停止
-        scheduler.add_job(BaseDBSession.keep_alive, IntervalTrigger(seconds=300), name="db_keep_alive")
-        scheduler.start()
+        # scheduler = BackgroundScheduler(daemon=True)  # 保活任务为守护线程，主线程退出时自动停止
+        # scheduler.add_job(BaseDBSession.keep_alive, IntervalTrigger(seconds=300), name="db_keep_alive")
+        # scheduler.start()
 
         for item in scheduled:
             timer = item[2]
