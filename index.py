@@ -15,26 +15,12 @@ from configuration.custom_session import CustomSession
 from dao.account_service import AccountService
 from dao.job_detail_service import JobDetailService
 from pojo.account import Account
+from pojo.api_error_set import APIErrorSet
 from pojo.job_detail import JobDetail
 from utils import Utils
 from errorInfo import ErrorCode
 from errorInfo import BasicException
 from configuration.logger_config import CLogger
-
-
-class Foo(object):
-    """
-    计数器，用于统计失败次数
-    """
-    _count = 0
-
-    @property
-    def count(self):
-        return Foo._count
-
-    @count.setter
-    def count(self, num):
-        Foo._count = num
 
 
 class RunService(object):
@@ -303,8 +289,27 @@ class CallAPI(object):
 
         return access_token, user_info
 
-    def run_api(self, api_list, account_token, user_agent, a, c):
-        f1 = Foo()  # 实例化计数器
+    def check_token_deadline(self, access_token, proxy, user_agent) -> bool:
+        # 判断是否存在数据库
+        if Config.DATABASE_URL is None:
+            self.logger.info("未配置数据库模式下刷新token")
+            # TODO 无数据库状态待编写
+            # self.get_ms_token(Config.CLIENT_ID, Config.CLIENT_SECRET, Config.MS_TOKEN, proxy, user_agent)
+            return False
+        else:
+            self.logger.info("数据库模式下刷新token")
+            db_rec = self.account_service.get_by_access_token(access_token)
+            if db_rec is None or db_rec.expires_at > Utils.get_beijing_time():
+                self.logger.info("数据库中token未过期！")
+                return False
+            else:
+                token_data = self.get_ms_token(Config.CLIENT_ID, Config.CLIENT_SECRET, Config.MS_TOKEN, proxy, user_agent)
+                access_token = token_data.get("access_token")
+                env_name = token_data.get("env_name")
+                self.account_service.update_access_token(env_name, access_token)
+                return True
+
+    def run_api(self, api_list, account_token, proxy, user_agent, err_set):
         for a in range(len(api_list)):
             if Config.ENABLE_API_DELAY:
                 time.sleep(random.randint(Config.API_DELAY_MIN, Config.API_DELAY_MAX))
@@ -315,22 +320,32 @@ class CallAPI(object):
                         "Authorization": account_token,
                         "User-Agent": user_agent,
                     },
+                    proxy=proxy,
                     timeout=10
                 )
                 if resp.status_code == 200:
                     self.logger.info('第' + str(api_list[a]) + "号api调用成功")
                 else:
                     self.logger.info(f"第 {str(api_list[a])} 号api调用失败, Detail: {resp.json}")
-                    if c == 1:  # 仅统计一轮错误次数
-                        f1.count = f1.count + 1
+                    if resp.status_code == 401:
+                        if self.check_token_deadline(account_token, proxy, user_agent):
+                            self.logger.info("token过期导致失败，已刷新")
+                        else:
+                            raise ValueError("token刷新过程出错，function 'check_token_deadline' return false")
+                    else:
+                        self.logger.error(f"API调用失败，且状态码超出预期，response:{resp.json}")
+                        err_set.add(api_list[a])
             except Exception as e:
                 self.logger.error(f"核心逻辑错误：API 调用失败 - {Config.API_LIST[api_list[a]]}, Detail: [{e}]")
 
 
 
 
-    def core(self,account_token, user_agent):
+    def core(self, account_token, proxy, user_agent):
         begin_time = time.time()  # 统计时间开始
+
+        # 错误集合
+        err_set = APIErrorSet()
 
         self.logger.info('共' + str(Config.ROUNDS_PER_RUN) + '轮')
         for c in range(1, Config.ROUNDS_PER_RUN + 1):
@@ -343,11 +358,11 @@ class CallAPI(object):
                 if Config.ENABLE_RANDOM_API_ORDER:
                     self.logger.info("已开启随机顺序,共12个api")
                     api_list = Utils.fix_list()
-                    self.run_api(api_list, account_token, user_agent, a, c)
+                    self.run_api(api_list, account_token, proxy, user_agent, err_set)
                 else:
                     self.logger.info("原版顺序,共10个api")
                     api_list = [5, 9, 8, 1, 20, 24, 23, 6, 21, 22]
-                    self.run_api(api_list, account_token, user_agent, a, c)
+                    self.run_api(api_list, account_token, proxy, user_agent, err_set)
             self.logger.info("本轮结束，等待启动下一轮")
 
 
@@ -359,9 +374,9 @@ class CallAPI(object):
 
         run_times = [hour, minute, second]
 
-        f2 = Foo()
-        if f2.count != 0:
-            Utils.send_message(f2.count, run_times, self.session)
+        if err_set.has_error:
+            Utils.send_message(1, run_times, err_set, self.session)
+
 
 
 
@@ -376,9 +391,10 @@ class CallAPI(object):
                 self.logger.info("调试终止程序")
                 sys.exit()
 
-            self.core(access_token, user_agent)
+            self.core(access_token, proxy, user_agent)
             self.logger.info("核心正常结束")
         except Exception as e:
+            Utils.send_message(-1, None, None, None)
             raise BasicException(ErrorCode.MAIN_LOGICAL_ERROR, extra=e)
 
 
