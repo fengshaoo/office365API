@@ -417,6 +417,7 @@ def entrance():
 
     logging.info(f"执行完成, end time: {time.strftime(time_formate)}")
     logging.info(f"本次运行耗时 {int(mins)} m {secs:.2f} s")
+    sys.exit(0)  # 强制程序退出
 
 
 if __name__ == "__main__":
