@@ -238,7 +238,8 @@ class CallAPI(object):
             expires_at = Utils.get_beijing_time(int(token_data.get("expires_in")))
         else:
             access_token = db_rec.access_token
-            expires_at = Utils.to_beijing_time(db_rec.expires_at)
+            # expires_at = Utils.to_beijing_time(db_rec.expires_at)
+            expires_at = Utils.add_beijing_timezone(db_rec.expires_at)
 
         # 存储本次获取的信息
         if db_url is not None and db_rec is None:
@@ -299,7 +300,7 @@ class CallAPI(object):
         else:
             self.logger.info("数据库模式下刷新token")
             db_rec = self.account_service.get_by_access_token(access_token)
-            if db_rec is None or db_rec.expires_at > Utils.get_beijing_time():
+            if db_rec is None or Utils.add_beijing_timezone(db_rec.expires_at) > Utils.get_beijing_time():
                 self.logger.info("数据库中token未过期！")
                 return False
             else:

@@ -210,6 +210,15 @@ class Utils:
         return indices
 
     @staticmethod
+    def add_beijing_timezone(dt: datetime) -> datetime:
+        """
+        为数据库中存储的北京时间添加 tzinfo
+        """
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone(timedelta(hours=8)))
+        return dt
+
+    @staticmethod
     def to_beijing_time(dt: datetime) -> datetime:
         """
         将任意 datetime 转换为北京时间（UTC+8）。
