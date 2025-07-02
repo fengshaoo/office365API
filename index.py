@@ -4,14 +4,18 @@ import time
 import logging
 import random
 import threading
+from concurrent.futures import wait
+
 import requests
 from datetime import datetime, timezone, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from pyexpat import features
 
 from config import Config
 from configuration.base_db_session import BaseDBSession
 from configuration.custom_session import CustomSession
+from configuration.thread_pool_config import ThreadPoolManager
 from dao.account_service import AccountService
 from dao.job_detail_service import JobDetailService
 from pojo.account import Account
@@ -22,6 +26,8 @@ from errorInfo import ErrorCode
 from errorInfo import BasicException
 from configuration.logger_config import CLogger
 
+
+thread_local = threading.local()
 
 class RunService(object):
 
@@ -99,6 +105,9 @@ class RunService(object):
         keys = list(Config.USER_TOKEN_DICT.keys())
         scheduled = []  # 存放 (account_key, delay, timer_obj)
 
+        thread_pool = ThreadPoolManager.get_instance(max_workers=10, thread_name_prefix="startup")
+        futures = []
+
         for idx_pos, idx in enumerate(enabled_indices):
             # idx_pos in [0, total-1], idx 是 USER_TOKEN_DICT 的索引
             start = idx_pos * interval
@@ -111,33 +120,55 @@ class RunService(object):
             proxy = random.choice(Config.PROXIES) if Config.PROXIES else None
             user_agent = random.choice(Config.USER_AGENT_LIST) if Config.USER_AGENT_LIST else None
 
-            # 定义调用：用 lambda 捕获当前变量
-            timer = threading.Timer(
-                delay,
-                startup_func,
-                args=(
-                    account_key,
-                    refresh_token,
-                    proxy,
-                    user_agent,
-                    *args
-                ),
-                kwargs=kwargs
-            )
-            timer.daemon = False  # 主线程等待
-            timer.start()
-            scheduled.append((account_key, delay, timer))
-            logging.info(
-                f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}")
+            def delayed_start(account_key=account_key,
+                              refresh_token=refresh_token,
+                              proxy=proxy,
+                              user_agent=user_agent,
+                              delay=delay):
+                try:
+                    logging.info(
+                        f"[Future] Future account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}"
+                    )
+                    time.sleep(delay)  # 模拟原本的定时启动
+                    startup_func(account_key, refresh_token, proxy, user_agent, *args, **kwargs)
+                except Exception as e:
+                    self.logger.exception(f"[Startup] 启动账号 {account_key} 异常: {e}")
+
+            # 将延迟启动任务提交到线程池
+            future = thread_pool.submit(delayed_start)
+            futures.append(future)
+
+            # scheduled.append((account_key, delay))
+            #
+            # # 定义调用：用 lambda 捕获当前变量
+            # timer = threading.Timer(
+            #     delay,
+            #     startup_func,
+            #     args=(
+            #         account_key,
+            #         refresh_token,
+            #         proxy,
+            #         user_agent,
+            #         *args
+            #     ),
+            #     kwargs=kwargs
+            # )
+            # timer.daemon = False  # 主线程等待
+            # timer.start()
+            # scheduled.append((account_key, delay, timer))
+            # logging.info(
+            #     f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}")
 
         # 添加数据保活定时任务
         # scheduler = BackgroundScheduler(daemon=True)  # 保活任务为守护线程，主线程退出时自动停止
         # scheduler.add_job(BaseDBSession.keep_alive, IntervalTrigger(seconds=300), name="db_keep_alive")
         # scheduler.start()
 
-        for item in scheduled:
-            timer = item[2]
-            timer.join()
+        wait(futures)
+
+        # for item in scheduled:
+        #     timer = item[2]
+        #     timer.join()
 
         self.logger.info("退出任务调用")
         try:
@@ -146,7 +177,7 @@ class RunService(object):
         except Exception as e:
             raise BasicException(ErrorCode.UPDATE_DATABASE_ERROR, extra=e)
 
-        return scheduled
+        return futures
 
 
 
@@ -354,7 +385,7 @@ class CallAPI(object):
                 time.sleep(random.randint(
                     Config.ROUNDS_PER_DELAY_MIN, Config.ROUNDS_PER_DELAY_MAX))
             for a in range(1, int(Config.APP_NUM) + 1):
-                self.logger.info('\n' + '应用/账号 ' + str(a) + ' 的第' + str(c) + '轮' +
+                self.logger.info('应用/账号 ' + str(a) + ' 的第' + str(c) + '轮' +
                       time.asctime(time.localtime(time.time())) + '\n')
                 if Config.ENABLE_RANDOM_API_ORDER:
                     self.logger.info("已开启随机顺序,共12个api")
@@ -420,10 +451,10 @@ def entrance():
                 job_detail_service=run_service.job_detail_service,
                 account_service=run_service.accountService
             )
-            scheduled_tasks = run_service.schedule_startup(Utils.select_enabled_indices(), call_api.run)
+            futures = run_service.schedule_startup(Utils.select_enabled_indices(), call_api.run)
             # 遍历打印每个已调度账号的信息
-            for account_key, delay, timer in scheduled_tasks:
-                logging.info(f"账号 {account_key} 计时器对象: {timer}")
+            # for account_key, delay, timer in scheduled_tasks:
+            #     logging.info(f"账号 {account_key} 计时器对象: {timer}")
 
     except Exception as e:
         logging.error(e)
