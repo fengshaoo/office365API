@@ -215,8 +215,12 @@ class Config:
         if cls.ENV_MODE == "DEBUG":
             logging.warning("调试环境")
             cls.ROUNDS_PER_RUN = 2
-            cls.MIN_START_DELAY = 0
-            cls.MAX_START_DELAY = 3
+            cls.MIN_START_DELAY = 1
+            cls.MAX_START_DELAY = 5
+            cls.ROUNDS_PER_DELAY_MIN = 1
+            cls.ROUNDS_PER_DELAY_MAX = 5
+            cls.API_DELAY_MIN = 1
+            cls.API_DELAY_MAX = 5
             cls.PROXIES = []
             cls.USER_AGENT_LIST = [
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.119 Safari/537.36",
