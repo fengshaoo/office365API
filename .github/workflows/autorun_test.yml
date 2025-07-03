@@ -2,7 +2,7 @@ name: AUTO_RUN_TEST
 
 on:
   watch:
-    types: [ started ]
+    types: [started]
 
 jobs:
   build:
@@ -11,7 +11,7 @@ jobs:
       TZ: Asia/Shanghai
       ENV_MODE: 'DEBUG'
 
-    if: (github.event_name == 'star') && (github.event.repository.owner.id == github.event.sender.id)
+    if: github.event.repository.owner.id == github.event.sender.id
 
     steps:
     - name: Checkout
