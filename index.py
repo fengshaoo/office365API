@@ -19,6 +19,7 @@ from configuration.thread_pool_config import ThreadPoolManager
 from dao.account_service import AccountService
 from dao.job_detail_service import JobDetailService
 from pojo.account import Account
+from pojo.account_context import AccountContext
 from pojo.api_error_set import APIErrorSet
 from pojo.job_detail import JobDetail
 from utils import Utils
@@ -27,6 +28,7 @@ from errorInfo import BasicException
 from configuration.logger_config import CLogger
 
 
+# 线程独享变量存储
 thread_local = threading.local()
 
 class RunService(object):
@@ -103,7 +105,6 @@ class RunService(object):
         interval = Config.MAX_START_DELAY / total
         # keys 顺序
         keys = list(Config.USER_TOKEN_DICT.keys())
-        scheduled = []  # 存放 (account_key, delay, timer_obj)
 
         thread_pool = ThreadPoolManager.get_instance(max_workers=10, thread_name_prefix="startup")
         futures = []
@@ -120,44 +121,26 @@ class RunService(object):
             proxy = random.choice(Config.PROXIES) if Config.PROXIES else None
             user_agent = random.choice(Config.USER_AGENT_LIST) if Config.USER_AGENT_LIST else None
 
-            def delayed_start(account_key=account_key,
-                              refresh_token=refresh_token,
-                              proxy=proxy,
-                              user_agent=user_agent,
-                              delay=delay):
+            def delayed_start():
                 try:
+                    account_context = AccountContext(
+                        account_key = account_key,
+                        refresh_token = refresh_token,
+                        proxy = proxy,
+                        user_agent = user_agent
+                    )
+
                     logging.info(
                         f"[Future] Future account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}"
                     )
-                    time.sleep(delay)  # 模拟原本的定时启动
-                    startup_func(account_key, refresh_token, proxy, user_agent, *args, **kwargs)
+                    time.sleep(delay)
+                    startup_func(account_context, *args, **kwargs)
                 except Exception as e:
                     self.logger.exception(f"[Startup] 启动账号 {account_key} 异常: {e}")
 
             # 将延迟启动任务提交到线程池
             future = thread_pool.submit(delayed_start)
             futures.append(future)
-
-            # scheduled.append((account_key, delay))
-            #
-            # # 定义调用：用 lambda 捕获当前变量
-            # timer = threading.Timer(
-            #     delay,
-            #     startup_func,
-            #     args=(
-            #         account_key,
-            #         refresh_token,
-            #         proxy,
-            #         user_agent,
-            #         *args
-            #     ),
-            #     kwargs=kwargs
-            # )
-            # timer.daemon = False  # 主线程等待
-            # timer.start()
-            # scheduled.append((account_key, delay, timer))
-            # logging.info(
-            #     f"[Scheduler] Scheduled account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}")
 
         # 添加数据保活定时任务
         # scheduler = BackgroundScheduler(daemon=True)  # 保活任务为守护线程，主线程退出时自动停止
@@ -244,7 +227,7 @@ class CallAPI(object):
         resp.raise_for_status()
         return resp.json()
 
-    def get_access_and_userinfo(self, account_key, refresh_token, proxy, user_agent):
+    def get_access_and_userinfo(self, account_context: AccountContext):
         """
         account_key: "MS_TOKEN" 或 "MS_TOKEN_01" 等
         refresh_token: 初始 refresh_token（从 Config.USER_TOKEN_DICT 取）
@@ -252,6 +235,11 @@ class CallAPI(object):
         """
         client_id = Config.CLIENT_ID
         client_secret = Config.CLIENT_SECRET
+
+        account_key = account_context.account_key
+        refresh_token = account_context.refresh_token
+        proxy = account_context.proxy
+        user_agent = account_context.user_agent
 
         access_token = None
         expires_at = None
@@ -269,7 +257,6 @@ class CallAPI(object):
             expires_at = Utils.get_beijing_time(int(token_data.get("expires_in")))
         else:
             access_token = db_rec.access_token
-            # expires_at = Utils.to_beijing_time(db_rec.expires_at)
             expires_at = Utils.add_beijing_timezone(db_rec.expires_at)
 
         # 存储本次获取的信息
@@ -321,27 +308,39 @@ class CallAPI(object):
 
         return access_token, user_info
 
-    def check_token_deadline(self, access_token, proxy, user_agent) -> bool:
+    def check_token_deadline(self, account_context: AccountContext) -> bool:
         # 判断是否存在数据库
         if Config.DATABASE_URL is None:
             self.logger.info("未配置数据库模式下刷新token")
-            # TODO 无数据库状态待编写
-            # self.get_ms_token(Config.CLIENT_ID, Config.CLIENT_SECRET, Config.MS_TOKEN, proxy, user_agent)
-            return False
+            token_data = self.get_ms_token(
+                Config.CLIENT_ID,
+                Config.CLIENT_SECRET,
+                account_context.refresh_token,
+                account_context.proxy,
+                account_context.user_agent
+            )
+            account_context.account_token = token_data.get("access_token")
+            return True
         else:
             self.logger.info("数据库模式下刷新token")
-            db_rec = self.account_service.get_by_access_token(access_token)
+            db_rec = self.account_service.get_by_access_token(account_context.account_token)
             if db_rec is None or Utils.add_beijing_timezone(db_rec.expires_at) > Utils.get_beijing_time():
                 self.logger.info("数据库中token未过期！")
                 return False
             else:
-                token_data = self.get_ms_token(Config.CLIENT_ID, Config.CLIENT_SECRET, Config.MS_TOKEN, proxy, user_agent)
-                access_token = token_data.get("access_token")
-                env_name = token_data.get("env_name")
-                self.account_service.update_access_token(env_name, access_token)
+                token_data = self.get_ms_token(
+                    Config.CLIENT_ID,
+                    Config.CLIENT_SECRET,
+                    account_context.refresh_token,
+                    account_context.proxy,
+                    account_context.user_agent
+                )
+                account_token = token_data.get("access_token")
+                account_context.account_token = account_token
+                self.account_service.update_access_token(account_context.account_key, account_token)
                 return True
 
-    def run_api(self, api_list, account_token, proxy, user_agent, err_set):
+    def run_api(self, api_list, account_context: AccountContext, err_set):
         for a in range(len(api_list)):
             if Config.ENABLE_API_DELAY:
                 time.sleep(random.randint(Config.API_DELAY_MIN, Config.API_DELAY_MAX))
@@ -349,10 +348,10 @@ class CallAPI(object):
                 resp = self.session.get(
                     Config.API_LIST[api_list[a]],
                     headers={
-                        "Authorization": account_token,
-                        "User-Agent": user_agent,
+                        "Authorization": account_context.account_token,
+                        "User-Agent": account_context.user_agent,
                     },
-                    proxy=proxy,
+                    proxy=account_context.proxy,
                     timeout=10
                 )
                 if resp.status_code == 200:
@@ -360,7 +359,7 @@ class CallAPI(object):
                 else:
                     self.logger.info(f"第 {str(api_list[a])} 号api调用失败, Detail: {resp.json}")
                     if resp.status_code == 401:
-                        if self.check_token_deadline(account_token, proxy, user_agent):
+                        if self.check_token_deadline(account_context):
                             self.logger.info("token过期导致失败，已刷新")
                         else:
                             raise ValueError("token刷新过程出错，function 'check_token_deadline' return false")
@@ -371,9 +370,7 @@ class CallAPI(object):
                 self.logger.error(f"核心逻辑错误：API 调用失败 - {Config.API_LIST[api_list[a]]}, Detail: [{e}]")
 
 
-
-
-    def core(self, account_token, proxy, user_agent):
+    def core(self, account_context: AccountContext):
         begin_time = time.time()  # 统计时间开始
 
         # 错误集合
@@ -381,6 +378,7 @@ class CallAPI(object):
 
         self.logger.info('共' + str(Config.ROUNDS_PER_RUN) + '轮')
         for c in range(1, Config.ROUNDS_PER_RUN + 1):
+            # 运行轮次循环
             if Config.ENABLE_RANDOM_START_DELAY:
                 time.sleep(random.randint(
                     Config.ROUNDS_PER_DELAY_MIN, Config.ROUNDS_PER_DELAY_MAX))
@@ -390,11 +388,11 @@ class CallAPI(object):
                 if Config.ENABLE_RANDOM_API_ORDER:
                     self.logger.info("已开启随机顺序,共12个api")
                     api_list = Utils.fix_list()
-                    self.run_api(api_list, account_token, proxy, user_agent, err_set)
+                    self.run_api(api_list, account_context, err_set)
                 else:
                     self.logger.info("原版顺序,共10个api")
                     api_list = [5, 9, 8, 1, 20, 24, 23, 6, 21, 22]
-                    self.run_api(api_list, account_token, proxy, user_agent, err_set)
+                    self.run_api(api_list, account_context, err_set)
             self.logger.info("本轮结束，等待启动下一轮")
 
 
@@ -412,18 +410,23 @@ class CallAPI(object):
 
 
 
-    def run(self, account_key, refresh_token, proxy, user_agent, *args):
+    def run(self, account_context: AccountContext, *args):
         try:
             # 1.登陆
             self.logger.info("用户登陆")
-            access_token, user_info = self.get_access_and_userinfo(account_key, refresh_token, proxy, user_agent)
+            access_token, user_info = self.get_access_and_userinfo(account_context)
             self.logger.info(f"已获取用户信息：access_token: ******, user_info: ******")
+            # 存入thread local
+            thread_local.access_token = access_token
+            thread_local.user_info = user_info
 
             if Config.ENV_MODE == "DEBUG":
                 self.logger.info("调试终止程序")
                 sys.exit()
 
-            self.core(access_token, proxy, user_agent)
+            account_context.account_token = access_token
+
+            self.core(account_context)
             self.logger.info("核心正常结束")
         except Exception as e:
             Utils.send_message(-1, None, None, None)
@@ -452,9 +455,6 @@ def entrance():
                 account_service=run_service.accountService
             )
             futures = run_service.schedule_startup(Utils.select_enabled_indices(), call_api.run)
-            # 遍历打印每个已调度账号的信息
-            # for account_key, delay, timer in scheduled_tasks:
-            #     logging.info(f"账号 {account_key} 计时器对象: {timer}")
 
     except Exception as e:
         logging.error(e)
