@@ -1,7 +1,8 @@
 name: AUTO_RUN_TEST
 
 on:
-  star:
+  watch:
+    types: [ started ]
 
 jobs:
   build:
