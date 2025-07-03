@@ -420,9 +420,9 @@ class CallAPI(object):
             thread_local.access_token = access_token
             thread_local.user_info = user_info
 
-            if Config.ENV_MODE == "DEBUG":
-                self.logger.info("调试终止程序")
-                sys.exit()
+            # if Config.ENV_MODE == "DEBUG":
+            #     self.logger.info("调试终止程序")
+            #     sys.exit()
 
             account_context.account_token = access_token
 
