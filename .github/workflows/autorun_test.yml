@@ -1,8 +1,7 @@
 name: AUTO_RUN_TEST
 
 on:
-  watch:
-    types: [ started ]
+  star:
 
 jobs:
   build:
@@ -11,11 +10,13 @@ jobs:
       TZ: Asia/Shanghai
       ENV_MODE: 'DEBUG'
 
-    if: (github.event_name == 'star') && (github.event.repository.owner.id == github.event.sender.id) && (github.ref == 'refs/heads/test')
+    if: (github.event_name == 'star') && (github.event.repository.owner.id == github.event.sender.id)
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        ref: test
 
     - name: Set up Python
       uses: actions/setup-python@v2
