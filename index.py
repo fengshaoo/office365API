@@ -383,8 +383,7 @@ class CallAPI(object):
                 time.sleep(random.randint(
                     Config.ROUNDS_PER_DELAY_MIN, Config.ROUNDS_PER_DELAY_MAX))
             for a in range(1, int(Config.APP_NUM) + 1):
-                self.logger.info('应用/账号 ' + str(a) + ' 的第' + str(c) + '轮' +
-                      time.asctime(time.localtime(time.time())) + '\n')
+                self.logger.info(f"应用/账号[{account_context.account_key}]的第[{str(c)}]轮开始")
                 if Config.ENABLE_RANDOM_API_ORDER:
                     self.logger.info("已开启随机顺序,共12个api")
                     api_list = Utils.fix_list()
