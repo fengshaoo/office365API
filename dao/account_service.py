@@ -18,6 +18,17 @@ class AccountService(BaseDBSession):
                 return account
             return None
 
+    def get_by_access_token(self, access_token: str):
+        with self.get_session() as session:
+            result = session.query(Account).filter(Account.access_token == access_token).first()
+            if result:
+                # 手动构造一个脱离 session 的 Account 对象
+                account = Account()
+                for column in Account.__table__.columns:
+                    setattr(account, column.name, getattr(result, column.name))
+                return account
+            return None
+
     def insert(self, account: Account):
         with self.get_session() as session:
             session.add(account)

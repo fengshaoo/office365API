@@ -18,6 +18,7 @@ from dao.job_detail_service import JobDetailService
 from errorInfo import ErrorCode
 from errorInfo import BasicException
 from configuration.logger_config import CLogger
+from pojo.api_error_set import APIErrorSet
 
 
 class Utils:
@@ -64,23 +65,60 @@ class Utils:
 
     # 出现失败情况时发送通知信息
     @staticmethod
-    def send_message(i, run_times):
-        a = 12 - i
-        local_time = time.strftime('%Y-%m-%d %H:%M:%S')
-
-        # Telegram 提醒功能，通过GET方法实现
-        telegram_url = Config.TELEGRAM_URL
+    def send_message(err_type: int, run_times, err_set: APIErrorSet, req_session):
         telegram_token = os.getenv("TELEGRAM_TOKEN")
         telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
-        if i != 12:
-            telegram_text = "Office365AutoAPI调用存在异常情况！\n调用总数： 12 \n成功个数： {} \n失败个数： {} \n调用持续时长为： {}时{}分{}秒 \n调用时间： {} (UTC) ".format(
-                a, i, run_times[0], run_times[1], run_times[2], local_time)
-        else:
-            telegram_text = "Office365调用token失效，请及时更新token！\n调用总数： 12 \n成功个数： {} \n失败个数： {} \n调用持续时长为： {}时{}分{}秒 \n调用时间： {} (UTC) ".format(
-                a, i, run_times[0], run_times[1], run_times[2], local_time)
+        telegram_url = f"{Config.TELEGRAM_URL}{telegram_token}/sendMessage"
 
-        telegram_address = telegram_url + telegram_token + "/sendMessage?chat_id=-" + telegram_chat_id + "&text=" + telegram_text
-        requests.get(telegram_address)
+        if err_type == -1:
+            title = "*❌ Token失效提醒，请及时更新Token！*"
+            telegram_address = telegram_url + "?chat_id=-" + Config.TELEGRAM_CHAT_ID + "&text=" + title
+            req_session.get(telegram_address)
+            pass
+        else:
+            hours, minutes, seconds = run_times
+            local_time = time.strftime('%Y-%m-%d %H:%M:%S')
+
+            title = "*🚨 Office365 Auto API 调用异常提醒*"
+
+            # 构建失败 API 列表文本
+            if err_set.count > 0:
+                failed_apis = "\n".join([f"  • `{item}`" for item in err_set._error_set])
+                error_list_text = f"\n *失败 API 列表：*\n{failed_apis}\n"
+            else:
+                error_list_text = ""
+
+            body = (
+                f"\n📊 *调用统计：*\n"
+                f"  • 总调用数：*12*\n"
+                f"  • 失败个数：*{err_set.count}*\n\n"
+                f"⏱ *调用持续时长：*\n"
+                f"  • {hours} 时 {minutes} 分 {seconds} 秒\n\n"
+                f"🕒 *调用时间：*\n"
+                f"  • `{local_time}` (ShangHai)\n"
+                f"{error_list_text}"
+            )
+
+            message = title + body
+
+            # MarkdownV2 格式注意转义
+            def escape_markdown(text):
+                escape_chars = r"\_*[]()~`>#+-=|{}.!<>"
+                return ''.join(f'\\{c}' if c in escape_chars else c for c in text)
+
+            message = escape_markdown(message)
+
+            payload = {
+                "chat_id": f"{telegram_chat_id}",
+                "text": message,
+                "parse_mode": "MarkdownV2"
+            }
+
+            try:
+                response = req_session.post(telegram_url, data=payload)
+                response.raise_for_status()
+            except Exception as e:
+                print(f"[错误] 发送Telegram通知失败: {e}")
 
 
     @staticmethod
@@ -170,6 +208,15 @@ class Utils:
             indices = random.sample(range(Config.APP_NUM), Config.ENABLE_NUM)
         random.shuffle(indices)
         return indices
+
+    @staticmethod
+    def add_beijing_timezone(dt: datetime) -> datetime:
+        """
+        为数据库中存储的北京时间添加 tzinfo
+        """
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone(timedelta(hours=8)))
+        return dt
 
     @staticmethod
     def to_beijing_time(dt: datetime) -> datetime:
