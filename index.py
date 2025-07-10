@@ -12,8 +12,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from pyexpat import features
 
-from setuptools.package_index import user_agent
-
 from config import Config
 from configuration.base_db_session import BaseDBSession
 from configuration.custom_session import CustomSession
