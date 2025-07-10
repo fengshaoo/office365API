@@ -2,7 +2,7 @@ name: AUTO_RUN
 
 on:
   schedule:
-    - cron: '0 8-18 * * 1-6'
+    - cron: '10 1-10 * * 1-6'
 
 jobs:
   build:
