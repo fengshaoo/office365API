@@ -50,11 +50,13 @@ class RunService(object):
             Utils.write_env(
                 [
                     "LOG_FILENAME",
-                    "JOB_ID"
+                    "JOB_ID",
+                    "LOG_DATETIME"
                 ],
                 [
                     Config.LOG_FILENAME,
-                    self.job_id
+                    self.job_id,
+                    datetime.now().strftime("%y%m%d%H%M")
                 ]
             )
         except Exception as e:
