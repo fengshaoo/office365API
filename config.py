@@ -215,7 +215,7 @@ class Config:
         sqlalchemy_logger.setLevel(logging.WARNING)
         if cls.ENV_MODE != "PROD":
             logging.warning("调试环境")
-            cls.ROUNDS_PER_RUN = 2
+            cls.ROUNDS_PER_RUN = 1
             cls.MIN_START_DELAY = 1
             cls.MAX_START_DELAY = 5
             cls.ROUNDS_PER_DELAY_MIN = 1
