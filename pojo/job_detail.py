@@ -13,3 +13,6 @@ class JobDetail(Base):
     status = Column(String(50))
     job_status = Column(SmallInteger)
     ip_address = Column(String(45))
+    host_city = Column(String(20))
+    host_timezone = Column(String(20))
+    isp = Column(String(100))

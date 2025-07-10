@@ -61,7 +61,10 @@ class Config:
     # ---------------------------------------------------------------
 
     # ------------------------- 自动配置区域 ---------------------------
+    # 是否隐藏SQL日志的参数
     HIDE_SQL_PARAMETERS = True
+    # 请求运行服务器的信息URL
+    IP_INFO_URL = "https://ipinfo.io/json"
     # 微软校验用的重定向地址，与Azure应用配置保持一致
     REDIRECT_URI = "http://localhost:53682/"
     # 获取access_token的请求端点
@@ -215,7 +218,7 @@ class Config:
         sqlalchemy_logger.setLevel(logging.WARNING)
         if cls.ENV_MODE != "PROD":
             logging.warning("调试环境")
-            cls.ROUNDS_PER_RUN = 2
+            cls.ROUNDS_PER_RUN = 1
             cls.MIN_START_DELAY = 1
             cls.MAX_START_DELAY = 5
             cls.ROUNDS_PER_DELAY_MIN = 1
