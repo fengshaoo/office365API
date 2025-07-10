@@ -9,7 +9,7 @@ class JobDetailService(BaseDBSession):
         super().__init__(database_url)
 
     def get_by_id(self, job_id: int):
-        with self.get_session() as session:
+        with self.get_readonly_session() as session:
             result = session.query(JobDetail).filter(JobDetail.id == job_id).first()
             if result:
                 # 手动构造一个脱离 session 的 Account 对象
