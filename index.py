@@ -100,6 +100,7 @@ class RunService(object):
                 host_timezone=ip_data.get('timezone'),
                 isp=ip_data.get('org'),
             )
+            self.logger.info(f"服务器IP信息获取成功：{ip_data}")
         except Exception as e:
             raise BasicException(ErrorCode.INVOKE_API_ERROR, extra=e)
         return new_job
