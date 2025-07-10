@@ -5,6 +5,7 @@ import logging
 import random
 import threading
 from concurrent.futures import wait
+from ipaddress import ip_address
 
 import requests
 from datetime import datetime, timezone, timedelta
@@ -79,7 +80,8 @@ class RunService(object):
                 end_time = None,
                 process = 'init',
                 status = 'running',
-                job_status = 0
+                job_status = 0,
+                # ip_address =
             )
             self.job_detail_service.create_job(new_job)
             self.logger.info("数据库初始化完成")
