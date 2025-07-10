@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Shanghai
-      ENV_MODE: 'DEBUG'
+      ENV_MODE: 'DEV'
 
     if: github.event.repository.owner.id == github.event.sender.id
 
@@ -76,9 +76,8 @@ jobs:
         ssh-keyscan "${LOG_SERVER_HOST}" 2>/dev/null | grep -v '^#' >> ~/.ssh/known_hosts
         
         LOG_DATE=$(date +'%m%d%H%M')
-        mv ${LOG_FILENAME}.log ${LOG_FILENAME}_${LOG_DATE}.log
-
-        scp -q ${LOG_FILENAME}_${LOG_DATE}.log "${LOG_SERVER_USER}@${LOG_SERVER_HOST}:${LOG_FILE_PATH}"
+        
+        scp -q ${LOG_FILENAME}_${LOG_DATETIME}.log "${LOG_SERVER_USER}@${LOG_SERVER_HOST}:${LOG_FILE_PATH}"
         
         echo "Log file uploaded successfully."
 
