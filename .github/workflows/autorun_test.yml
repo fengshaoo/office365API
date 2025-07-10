@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Shanghai
-      ENV_MODE: 'DEBUG'
+      ENV_MODE: 'DEV'
 
     if: github.event.repository.owner.id == github.event.sender.id
 
