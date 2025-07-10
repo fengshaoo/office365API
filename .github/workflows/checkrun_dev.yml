@@ -1,8 +1,6 @@
 name: AUTO_RUN
 
-on:
-  watch:
-    types: [started]
+on: []
 
 jobs:
   build:

@@ -74,18 +74,35 @@ class RunService(object):
                 raise BasicException(ErrorCode.DATABASE_CONNECT_ERROR, extra=e)
 
             # 初始化本次任务的数据库
-            new_job = JobDetail(
-                id = self.job_id,
-                start_time = datetime.now(),
-                end_time = None,
-                process = 'init',
-                status = 'running',
-                job_status = 0,
-                # ip_address =
-            )
-            self.job_detail_service.create_job(new_job)
+            self.job_detail_service.create_job(self.init_job_data())
             self.logger.info("数据库初始化完成")
         return self
+
+
+    def init_job_data(self):
+        """
+        获取运行服务器的IP相关信息
+        """
+        try:
+            response = requests.get(Config.IP_INFO_URL, timeout=5)
+            response.raise_for_status()
+
+            ip_data = response.json()
+            new_job = JobDetail(
+                id=self.job_id,
+                start_time=datetime.now(),
+                end_time=None,
+                process='init',
+                status='running',
+                job_status=0,
+                ip_address=ip_data.get('ip'),
+                host_city=ip_data.get('city'),
+                host_timezone=ip_data.get('timezone'),
+                isp=ip_data.get('org'),
+            )
+        except Exception as e:
+            raise BasicException(ErrorCode.INVOKE_API_ERROR, extra=e)
+        return new_job
 
 
     def schedule_startup(self, enabled_indices, startup_func, *args, **kwargs):
@@ -332,6 +349,9 @@ class CallAPI(object):
         return access_token, user_info
 
     def check_token_deadline(self, account_context: AccountContext) -> bool:
+        """
+        检查token是否过期
+        """
         # 判断是否存在数据库
         if Config.DATABASE_URL is None:
             self.logger.info("未配置数据库模式下刷新token")
@@ -364,6 +384,9 @@ class CallAPI(object):
                 return True
 
     def run_api(self, api_list, account_context: AccountContext, err_set):
+        """
+        按照设定的轮次循环调用API
+        """
         for a in range(len(api_list)):
             if Config.ENABLE_API_DELAY:
                 time.sleep(random.randint(Config.API_DELAY_MIN, Config.API_DELAY_MAX))
