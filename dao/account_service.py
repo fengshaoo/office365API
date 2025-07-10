@@ -8,7 +8,7 @@ class AccountService(BaseDBSession):
         super().__init__(database_url)
 
     def get_by_env_name(self, env_name: str):
-        with self.get_session() as session:
+        with self.get_readonly_session() as session:
             result = session.query(Account).filter(Account.env_name == env_name).first()
             if result:
                 # 手动构造一个脱离 session 的 Account 对象
@@ -19,7 +19,7 @@ class AccountService(BaseDBSession):
             return None
 
     def get_by_access_token(self, access_token: str):
-        with self.get_session() as session:
+        with self.get_readonly_session() as session:
             result = session.query(Account).filter(Account.access_token == access_token).first()
             if result:
                 # 手动构造一个脱离 session 的 Account 对象

@@ -1,4 +1,4 @@
-name: AUTO_RUN_TEST
+name: AUTO_RUN
 
 on:
   watch:
@@ -11,13 +11,14 @@ jobs:
       TZ: Asia/Shanghai
       ENV_MODE: 'DEV'
 
-    if: github.event.repository.owner.id == github.event.sender.id
+    if: |
+      github.event.repository.owner.id == github.event.sender.id &&
+      github.repository == 'SherlockFloyd/office365API' &&
+      github.ref == 'refs/heads/dev'
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        ref: test
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -30,7 +31,6 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run API
-      continue-on-error: true
       env:
         # GitHub 的账号信息
         GH_REPO: ${{ github.repository }}
