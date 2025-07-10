@@ -5,6 +5,7 @@ import logging
 import random
 import threading
 from concurrent.futures import wait
+from ipaddress import ip_address
 
 import requests
 from datetime import datetime, timezone, timedelta
@@ -79,7 +80,8 @@ class RunService(object):
                 end_time = None,
                 process = 'init',
                 status = 'running',
-                job_status = 0
+                job_status = 0,
+                # ip_address =
             )
             self.job_detail_service.create_job(new_job)
             self.logger.info("数据库初始化完成")
@@ -120,20 +122,20 @@ class RunService(object):
             refresh_token = Config.USER_TOKEN_DICT[account_key]
 
             # 随机选择 proxy 和 UA
-            proxy = random.choice(Config.PROXIES) if Config.PROXIES else None
-            user_agent = random.choice(Config.USER_AGENT_LIST) if Config.USER_AGENT_LIST else None
+            # proxy = random.choice(Config.PROXIES) if Config.PROXIES else None
+            # user_agent = random.choice(Config.USER_AGENT_LIST) if Config.USER_AGENT_LIST else None
 
             def delayed_start():
                 try:
                     account_context = AccountContext(
                         account_key = account_key,
                         refresh_token = refresh_token,
-                        proxy = proxy,
-                        user_agent = user_agent
+                        # proxy = proxy,
+                        # user_agent = user_agent
                     )
 
                     logging.info(
-                        f"[Future] Future account {account_key} with delay {delay:.2f}s, proxy={proxy}, UA={user_agent}"
+                        f"[Future] Future account {account_key} with delay {delay:.2f}s"
                     )
                     time.sleep(delay)
                     startup_func(account_context, *args, **kwargs)
@@ -182,6 +184,25 @@ class CallAPI(object):
         self.session = session
         self.job_detail_service = job_detail_service
         self.account_service = account_service
+
+    def get_user_data(self, account_context: AccountContext):
+        """
+        补充发送API所需的上下文信息
+        :param account_context:
+        :return:
+        """
+        user_agent = None
+        proxy = None
+        if Config.DATABASE_URL is None:
+            user_agent = Config.USER_AGENT_LIST[0] if Config.USER_AGENT_LIST[0] else None
+            proxy = Config.USER_AGENT_LIST if Config.USER_AGENT_LIST else None
+        else:
+            db_rec = self.account_service.get_by_env_name(account_context.account_key)
+            user_agent = db_rec.user_agent
+            proxy = db_rec.proxy
+        account_context.user_agent = user_agent
+        account_context.proxy = proxy
+        self.logger.info(f"已获取用户上下文信息：User-Agent:{user_agent}, proxy:{proxy}.")
 
 
     def get_ms_token(self, client_id, client_secret, refresh_token, proxy, user_agent):
@@ -413,6 +434,8 @@ class CallAPI(object):
 
     def run(self, account_context: AccountContext, *args):
         try:
+            # 获取必要信息
+            self.get_user_data(account_context)
             # 1.登陆
             self.logger.info("用户登陆")
             access_token, user_info = self.get_access_and_userinfo(account_context)

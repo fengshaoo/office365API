@@ -12,3 +12,4 @@ class JobDetail(Base):
     process = Column(String(255))
     status = Column(String(50))
     job_status = Column(SmallInteger)
+    ip_address = Column(String(45))
