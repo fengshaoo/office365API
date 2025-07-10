@@ -2,7 +2,7 @@ name: AUTO_RUN
 
 on:
   schedule:
-    - cron: '0 8-18 * * 1-6'
+    - cron: '10 1-10 * * 1-6'
 
 jobs:
   build:
@@ -73,7 +73,7 @@ jobs:
         echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan "${LOG_SERVER_HOST}" 2>/dev/null | grep -v '^#' >> ~/.ssh/known_hosts
-        
+
         scp -q ${LOG_FILENAME}_${LOG_DATETIME}.log "${LOG_SERVER_USER}@${LOG_SERVER_HOST}:${LOG_FILE_PATH}"
         
         echo "Log file uploaded successfully."
