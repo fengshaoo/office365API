@@ -75,6 +75,11 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan "${LOG_SERVER_HOST}" 2>/dev/null | grep -v '^#' >> ~/.ssh/known_hosts
         
+        if [ ! -f "${LOG_FILENAME}.log" ]; then
+          echo "日志文件不存在：${LOG_FILENAME}.log"
+          exit 0
+        fi
+        mv ${LOG_FILENAME}.log ${LOG_FILENAME}_${LOG_DATETIME}.log
         scp -q ${LOG_FILENAME}_${LOG_DATETIME}.log "${LOG_SERVER_USER}@${LOG_SERVER_HOST}:${LOG_FILE_PATH}"
         
         echo "Log file uploaded successfully."

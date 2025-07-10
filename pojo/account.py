@@ -12,5 +12,7 @@ class Account(Base):
     access_token = Column(String(300), nullable=True)
     refresh_token = Column(String(300), nullable=True)
     expires_at = Column(DateTime)
+    user_agent = Column(String(300))
+    proxy = Column(String(300))
     update_time = Column(DateTime, default=lambda: datetime.now(timezone.utc) + timedelta(hours=8), onupdate=lambda: datetime.now(timezone.utc) + timedelta(hours=8))
     create_time = Column(DateTime)
