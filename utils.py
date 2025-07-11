@@ -86,31 +86,29 @@ class Utils:
             hours, minutes, seconds = run_times
             local_time = time.strftime('%Y-%m-%d %H:%M:%S')
 
-            title = "* Office365 Auto API 调用异常提醒 *"
-
             # 构建失败 API 列表文本
             if err_set.count > 0:
-                failed_apis = "<br>".join([f"&nbsp;&nbsp;&bull; <code>{item}</code>" for item in err_set._error_set])
-                error_list_text = f"<br><b>失败 API 列表：</b><br>{failed_apis}<br>"
+                failed_apis = ([f"<code>{item}</code>" for item in err_set._error_set])
+                error_list_text = f"<tg-spoiler>{failed_apis}</tg-spoiler>"
             else:
                 error_list_text = ""
 
-            # body = (
-            #     f"<br><b>调用统计：</b><br>"
-            #     f"&nbsp;&nbsp;&bull; 总调用数：<b>12</b><br>"
-            #     f"&nbsp;&nbsp;&bull; 失败个数：<b>{err_set.count}</b><br><br>"
-            #     f"<b>调用持续时长：</b><br>"
-            #     f"&nbsp;&nbsp;&bull; {hours} 时 {minutes} 分 {seconds} 秒<br><br>"
-            #     f"<b>调用时间：</b><br>"
-            #     f"&nbsp;&nbsp;&bull; <code>{local_time}</code> (ShangHai)<br>"
-            #     f"{error_list_text}"
-            # )
+            with open("resource/tg_message_template.html") as f:
+                html_template = f.read()
 
-            message = "<b>bold</b>"
+            html_message = html_template.format(
+                total_calls=12,
+                fail_count=err_set.count,
+                hours=hours,
+                minutes=minutes,
+                seconds=seconds,
+                local_time=local_time,
+                error_list_html=error_list_text
+            )
 
             payload = {
                 "chat_id": f"{telegram_chat_id}",
-                "text": message,
+                "text": html_message,
                 "parse_mode": "HTML"
             }
 
