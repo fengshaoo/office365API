@@ -458,7 +458,7 @@ class CallAPI(object):
             try:
                 Utils.send_message(1, run_times, err_set, self.session)
             except Exception as e:
-                self.logger.error(ErrorCode.SEND_NOTICE_ERROR, extra=e)
+                self.logger.error(ErrorCode.SEND_NOTICE_ERROR)
 
 
 
