@@ -114,7 +114,7 @@ class Utils:
                 "parse_mode": "HTML"
             }
 
-            response = requests.post(telegram_url, data=payload)
+            response = requests.post(telegram_url, json=payload)
             print_debug_info = PrintDebugInfo()
             print_debug_info.print_request_debug(response)
         response.raise_for_status()
