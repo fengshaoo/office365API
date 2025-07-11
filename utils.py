@@ -89,9 +89,8 @@ class Utils:
             # 构建失败 API 列表文本
             if err_set.count > 0:
                 failed_apis = ([f"<code>{item}</code>" for item in err_set._error_set])
-                error_list_text = f"<tg-spoiler>{failed_apis}</tg-spoiler>"
             else:
-                error_list_text = ""
+                failed_apis = ""
 
             with open("resource/tg_message_template.html") as f:
                 html_template = f.read()
@@ -103,7 +102,7 @@ class Utils:
                 minutes=minutes,
                 seconds=seconds,
                 local_time=local_time,
-                error_list_html=error_list_text
+                error_list_html=failed_apis
             )
 
             payload = {
