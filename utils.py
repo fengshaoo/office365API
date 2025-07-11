@@ -95,16 +95,18 @@ class Utils:
             else:
                 error_list_text = ""
 
-            body = (
-                f"<br><b>调用统计：</b><br>"
-                f"&nbsp;&nbsp;&bull; 总调用数：<b>12</b><br>"
-                f"&nbsp;&nbsp;&bull; 失败个数：<b>{err_set.count}</b><br><br>"
-                f"<b>调用持续时长：</b><br>"
-                f"&nbsp;&nbsp;&bull; {hours} 时 {minutes} 分 {seconds} 秒<br><br>"
-                f"<b>调用时间：</b><br>"
-                f"&nbsp;&nbsp;&bull; <code>{local_time}</code> (ShangHai)<br>"
-                f"{error_list_text}"
-            )
+            # body = (
+            #     f"<br><b>调用统计：</b><br>"
+            #     f"&nbsp;&nbsp;&bull; 总调用数：<b>12</b><br>"
+            #     f"&nbsp;&nbsp;&bull; 失败个数：<b>{err_set.count}</b><br><br>"
+            #     f"<b>调用持续时长：</b><br>"
+            #     f"&nbsp;&nbsp;&bull; {hours} 时 {minutes} 分 {seconds} 秒<br><br>"
+            #     f"<b>调用时间：</b><br>"
+            #     f"&nbsp;&nbsp;&bull; <code>{local_time}</code> (ShangHai)<br>"
+            #     f"{error_list_text}"
+            # )
+
+            body = ("<br><b>调用统计：</b><br>")
 
             message = title + body
 
