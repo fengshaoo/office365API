@@ -19,6 +19,7 @@ from errorInfo import ErrorCode
 from errorInfo import BasicException
 from configuration.logger_config import CLogger
 from pojo.api_error_set import APIErrorSet
+from print_debug_info import PrintDebugInfo
 
 
 class Utils:
@@ -119,11 +120,10 @@ class Utils:
                 "parse_mode": "MarkdownV2"
             }
 
-            try:
-                response = req_session.post(telegram_url, data=payload)
-                response.raise_for_status()
-            except Exception as e:
-                print(f"[错误] 发送Telegram通知失败: {e}")
+            response = req_session.post(telegram_url, data=payload)
+            print_debug_info = PrintDebugInfo()
+            print_debug_info.print_request_debug(response)
+            response.raise_for_status()
 
 
     @staticmethod
