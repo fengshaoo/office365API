@@ -115,8 +115,8 @@ class Utils:
             }
 
             response = requests.post(telegram_url, data=payload)
-            # print_debug_info = PrintDebugInfo()
-            # print_debug_info.print_request_debug(response)
+            print_debug_info = PrintDebugInfo()
+            print_debug_info.print_request_debug(response)
         response.raise_for_status()
 
 
