@@ -106,9 +106,7 @@ class Utils:
             #     f"{error_list_text}"
             # )
 
-            body = ("<br><b>调用统计：</b><br>")
-
-            message = title + body
+            message = "<b>bold</b>"
 
             payload = {
                 "chat_id": f"{telegram_chat_id}",
