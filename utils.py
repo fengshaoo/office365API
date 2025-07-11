@@ -90,35 +90,28 @@ class Utils:
 
             # 构建失败 API 列表文本
             if err_set.count > 0:
-                failed_apis = "\n".join([f"  • `{item}`" for item in err_set._error_set])
-                error_list_text = f"\n * 失败 API 序号列表： *\n{failed_apis}\n"
+                failed_apis = "<br>".join([f"&nbsp;&nbsp;&bull; <code>{item}</code>" for item in err_set._error_set])
+                error_list_text = f"<br><b>失败 API 列表：</b><br>{failed_apis}<br>"
             else:
                 error_list_text = ""
 
             body = (
-                f"\n* 调用统计： *\n"
-                f"  • 总调用数： * 12 *\n"
-                f"  • 失败个数： * {err_set.count} *\n\n"
-                f" * 调用持续时长： *\n"
-                f"  • {hours} 时 {minutes} 分 {seconds} 秒\n\n"
-                f" * 调用时间： *\n"
-                f"  • `{local_time}` (ShangHai)\n"
+                f"<br><b>调用统计：</b><br>"
+                f"&nbsp;&nbsp;&bull; 总调用数：<b>12</b><br>"
+                f"&nbsp;&nbsp;&bull; 失败个数：<b>{err_set.count}</b><br><br>"
+                f"<b>调用持续时长：</b><br>"
+                f"&nbsp;&nbsp;&bull; {hours} 时 {minutes} 分 {seconds} 秒<br><br>"
+                f"<b>调用时间：</b><br>"
+                f"&nbsp;&nbsp;&bull; <code>{local_time}</code> (ShangHai)<br>"
                 f"{error_list_text}"
             )
 
             message = title + body
 
-            # MarkdownV2 格式注意转义
-            def escape_markdown(text):
-                escape_chars = r'_*[]()~`>#+-=|{}.!'
-                return re.sub(r'([%s])' % re.escape(escape_chars), r'\\\1', text)
-
-            message = escape_markdown(message)
-
             payload = {
                 "chat_id": f"{telegram_chat_id}",
                 "text": message,
-                "parse_mode": "MarkdownV2"
+                "parse_mode": "HTML"
             }
 
             response = requests.post(telegram_url, data=payload)
