@@ -79,18 +79,17 @@ class Utils:
         telegram_url = f"{Config.TELEGRAM_URL}{telegram_token}/sendMessage"
 
         if err_type == -1:
+            # 调用API意料之外错误
             title = "* Token失效提醒，请及时更新Token！*"
             telegram_address = telegram_url + "?chat_id=-" + Config.TELEGRAM_CHAT_ID + "&text=" + title
             response = requests.get(telegram_address)
+
         else:
+            # 调用API存在失败情况
             hours, minutes, seconds = run_times
             local_time = time.strftime('%Y-%m-%d %H:%M:%S')
 
-            # 构建失败 API 列表文本
-            if err_set.count > 0:
-                failed_apis = ([f"<code>{item}</code>" for item in err_set._error_set])
-            else:
-                failed_apis = ""
+            err_url_text = "\n".join(err_set.get_err_urls())
 
             with open("resource/tg_message_template.html") as f:
                 html_template = f.read()
@@ -102,7 +101,7 @@ class Utils:
                 minutes=minutes,
                 seconds=seconds,
                 local_time=local_time,
-                error_list_html=failed_apis
+                error_list_html=err_url_text
             )
 
             payload = {
