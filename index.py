@@ -402,8 +402,6 @@ class CallAPI(object):
                     timeout=10
                 )
 
-                err_set.add_error(api_list[a])
-
                 if resp.status_code == 200:
                     self.logger.info('第' + str(api_list[a]) + "号api调用成功")
                 else:
