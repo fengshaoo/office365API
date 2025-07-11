@@ -1,6 +1,7 @@
 import argparse
 import threading
 from datetime import datetime, timezone, timedelta
+from typing import re
 
 import requests
 import copy
@@ -19,6 +20,7 @@ from errorInfo import ErrorCode
 from errorInfo import BasicException
 from configuration.logger_config import CLogger
 from pojo.api_error_set import APIErrorSet
+from print_debug_info import PrintDebugInfo
 
 
 class Utils:
@@ -61,64 +63,57 @@ class Utils:
         # 额外抽取填充的api
         fixed_api.extend(random.sample(ex_api, 6))
         random.shuffle(fixed_api)
+
+        # 临时添加调试功能
+        if Config.ENV_MODE != "PROD":
+            fixed_api = [5]
+
         return fixed_api
 
     # 出现失败情况时发送通知信息
     @staticmethod
-    def send_message(err_type: int, run_times, err_set: APIErrorSet, req_session):
+    def send_message(err_type: int, run_times, err_set: APIErrorSet):
+        logging.info("推送消息")
         telegram_token = os.getenv("TELEGRAM_TOKEN")
         telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
         telegram_url = f"{Config.TELEGRAM_URL}{telegram_token}/sendMessage"
 
         if err_type == -1:
-            title = "*❌ Token失效提醒，请及时更新Token！*"
+            # 调用API意料之外错误
+            title = "* Token失效提醒，请及时更新Token！*"
             telegram_address = telegram_url + "?chat_id=-" + Config.TELEGRAM_CHAT_ID + "&text=" + title
-            req_session.get(telegram_address)
-            pass
+            response = requests.get(telegram_address)
+
         else:
+            # 调用API存在失败情况
             hours, minutes, seconds = run_times
             local_time = time.strftime('%Y-%m-%d %H:%M:%S')
 
-            title = "*🚨 Office365 Auto API 调用异常提醒*"
+            err_url_text = "\n".join(err_set.get_err_urls())
 
-            # 构建失败 API 列表文本
-            if err_set.count > 0:
-                failed_apis = "\n".join([f"  • `{item}`" for item in err_set._error_set])
-                error_list_text = f"\n *失败 API 列表：*\n{failed_apis}\n"
-            else:
-                error_list_text = ""
+            with open("resource/tg_message_template.html") as f:
+                html_template = f.read()
 
-            body = (
-                f"\n📊 *调用统计：*\n"
-                f"  • 总调用数：*12*\n"
-                f"  • 失败个数：*{err_set.count}*\n\n"
-                f"⏱ *调用持续时长：*\n"
-                f"  • {hours} 时 {minutes} 分 {seconds} 秒\n\n"
-                f"🕒 *调用时间：*\n"
-                f"  • `{local_time}` (ShangHai)\n"
-                f"{error_list_text}"
+            html_message = html_template.format(
+                total_calls=12,
+                fail_count=err_set.count,
+                hours=hours,
+                minutes=minutes,
+                seconds=seconds,
+                local_time=local_time,
+                error_list_html=err_url_text
             )
-
-            message = title + body
-
-            # MarkdownV2 格式注意转义
-            def escape_markdown(text):
-                escape_chars = r"\_*[]()~`>#+-=|{}.!<>"
-                return ''.join(f'\\{c}' if c in escape_chars else c for c in text)
-
-            message = escape_markdown(message)
 
             payload = {
                 "chat_id": f"{telegram_chat_id}",
-                "text": message,
-                "parse_mode": "MarkdownV2"
+                "text": html_message,
+                "parse_mode": "HTML"
             }
 
-            try:
-                response = req_session.post(telegram_url, data=payload)
-                response.raise_for_status()
-            except Exception as e:
-                print(f"[错误] 发送Telegram通知失败: {e}")
+            response = requests.post(telegram_url, json=payload)
+            # print_debug_info = PrintDebugInfo()
+            # print_debug_info.print_request_debug(response)
+        response.raise_for_status()
 
 
     @staticmethod

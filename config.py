@@ -112,6 +112,11 @@ class Config:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
     ]
 
+    API_PREFIXES = [
+        'https://graph.microsoft.com/v1.0',
+        'https://graph.microsoft.com/beta'
+    ]
+
     API_LIST = [
         r'https://graph.microsoft.com/v1.0/me/',
         r'https://graph.microsoft.com/v1.0/users',

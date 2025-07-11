@@ -351,7 +351,7 @@ class CallAPI(object):
 
     def check_token_deadline(self, account_context: AccountContext) -> bool:
         """
-        检查token是否过期
+        检查token是否过期并刷新
         """
         # 判断是否存在数据库
         if Config.DATABASE_URL is None:
@@ -401,6 +401,7 @@ class CallAPI(object):
                     proxy=account_context.proxy,
                     timeout=10
                 )
+
                 if resp.status_code == 200:
                     self.logger.info('第' + str(api_list[a]) + "号api调用成功")
                 else:
@@ -409,10 +410,11 @@ class CallAPI(object):
                         if self.check_token_deadline(account_context):
                             self.logger.info("token过期导致失败，已刷新")
                         else:
+                            err_set.add_error(api_list[a])
                             raise ValueError("token刷新过程出错，function 'check_token_deadline' return false")
                     else:
                         self.logger.error(f"API调用失败，且状态码超出预期，response:{resp.json}")
-                        err_set.add(api_list[a])
+                        err_set.add_error(api_list[a])
             except Exception as e:
                 self.logger.error(f"核心逻辑错误：API 调用失败 - {Config.API_LIST[api_list[a]]}, Detail: [{e}]")
 
@@ -432,8 +434,8 @@ class CallAPI(object):
             for a in range(1, int(Config.APP_NUM) + 1):
                 self.logger.info(f"应用/账号[{account_context.account_key}]的第[{str(c)}]轮开始")
                 if Config.ENABLE_RANDOM_API_ORDER:
-                    self.logger.info("已开启随机顺序,共12个api")
                     api_list = Utils.fix_list()
+                    self.logger.info(f"已开启随机顺序,共 {len(api_list)} 个api")
                     self.run_api(api_list, account_context, err_set)
                 else:
                     self.logger.info("原版顺序,共10个api")
@@ -451,7 +453,10 @@ class CallAPI(object):
         run_times = [hour, minute, second]
 
         if err_set.has_error:
-            Utils.send_message(1, run_times, err_set, self.session)
+            try:
+                Utils.send_message(1, run_times, err_set)
+            except Exception as e:
+                self.logger.error(ErrorCode.SEND_NOTICE_ERROR)
 
 
 
@@ -477,7 +482,7 @@ class CallAPI(object):
             self.core(account_context)
             self.logger.info("核心正常结束")
         except Exception as e:
-            Utils.send_message(-1, None, None, None)
+            Utils.send_message(-1, None, None)
             raise BasicException(ErrorCode.MAIN_LOGICAL_ERROR, extra=e)
 
 
