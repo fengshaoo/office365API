@@ -456,7 +456,7 @@ class CallAPI(object):
 
         if err_set.has_error:
             try:
-                Utils.send_message(1, run_times, err_set, self.session)
+                Utils.send_message(1, run_times, err_set)
             except Exception as e:
                 self.logger.error(ErrorCode.SEND_NOTICE_ERROR)
 
@@ -484,7 +484,7 @@ class CallAPI(object):
             self.core(account_context)
             self.logger.info("核心正常结束")
         except Exception as e:
-            Utils.send_message(-1, None, None, None)
+            Utils.send_message(-1, None, None)
             raise BasicException(ErrorCode.MAIN_LOGICAL_ERROR, extra=e)
 
 
