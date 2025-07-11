@@ -61,6 +61,11 @@ class Utils:
         # 额外抽取填充的api
         fixed_api.extend(random.sample(ex_api, 6))
         random.shuffle(fixed_api)
+
+        # 临时添加调试功能
+        if Config.ENV_MODE != "PROD":
+            fixed_api = [5]
+
         return fixed_api
 
     # 出现失败情况时发送通知信息
