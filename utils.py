@@ -1,6 +1,7 @@
 import argparse
 import threading
 from datetime import datetime, timezone, timedelta
+from typing import re
 
 import requests
 import copy
@@ -109,8 +110,8 @@ class Utils:
 
             # MarkdownV2 格式注意转义
             def escape_markdown(text):
-                escape_chars = r"\_*[]()~`>#+-=|{}.!<>"
-                return ''.join(f'\\{c}' if c in escape_chars else c for c in text)
+                escape_chars = r'_*[]()~`>#+-=|{}.!'
+                return re.sub(r'([%s])' % re.escape(escape_chars), r'\\\1', text)
 
             message = escape_markdown(message)
 
