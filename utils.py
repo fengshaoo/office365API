@@ -54,7 +54,7 @@ class Utils:
         :param content:
         :return:
         """
-        logging.info("推送消息")
+        logging.info(f"推送消息, err_type = {err_type}")
         telegram_token = os.getenv("TELEGRAM_TOKEN")
         telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
         telegram_url = f"{Config.TELEGRAM_URL}{telegram_token}/sendMessage"
@@ -99,6 +99,7 @@ class Utils:
                 response = requests.get(telegram_address)
 
             case _:
+                logging.info("默认错误处理")
                 try:
                 # 默认错误处理
                     if isinstance(content, Exception):
@@ -124,11 +125,15 @@ class Utils:
                         "parse_mode": "HTML"
                     }
                     requests.post(telegram_url, json=payload)
+                    print_debug_info = PrintDebugInfo()
+                    print_debug_info.print_request_debug(response)
                 except Exception as e:
                     logging.error(e)
                 finally:
+                    logging.info("消息推送成功")
                     return
 
+        logging.info("消息推送成功")
         response.raise_for_status()
 
 
