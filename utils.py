@@ -124,6 +124,8 @@ class Utils:
                         "text": html_message,
                         "parse_mode": "HTML"
                     }
+
+                    logging.info(f"payload:{payload}")
                     response = requests.post(telegram_url, json=payload)
                     print_debug_info = PrintDebugInfo()
                     print_debug_info.print_request_debug(response)
