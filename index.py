@@ -482,7 +482,6 @@ class CallAPI(object):
             self.core(account_context)
             self.logger.info("核心正常结束")
         except Exception as e:
-            Utils.send_message(-1, None, None)
             raise BasicException(ErrorCode.MAIN_LOGICAL_ERROR, extra=e)
 
 
@@ -510,6 +509,7 @@ def entrance():
             futures = run_service.schedule_startup(Utils.select_enabled_indices(), call_api.run)
 
     except Exception as e:
+        Utils.send_message(-100, None, e)
         logging.error(e)
 
     end_time = time.time()

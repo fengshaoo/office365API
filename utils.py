@@ -1,7 +1,8 @@
 import argparse
 import threading
+import traceback
 from datetime import datetime, timezone, timedelta
-from typing import re
+from typing import re, Union
 
 import requests
 import copy
@@ -28,32 +29,6 @@ class Utils:
     工具类
     """
     @staticmethod
-    def sendmessage_temp(i, run_times):
-        """
-        出现错误时发送错误消息
-        :param i: 错误次数
-        :param run_times: 运行时间
-        :return:
-        """
-        a = 12 - i
-        local_time = time.strftime('%Y-%m-%d %H:%M:%S')
-
-        # 失败提醒功能
-        if Config.TELEGRAM_MESSAGE_STATUS:
-            if i != 12:
-                telegram_text = "Office365AutoAPI调用存在异常情况！\n调用总数： 12 \n成功个数： {} \n失败个数： {} \n调用持续时长为： {}时{}分{}秒 \n调用时间： {} (UTC) ".format(
-                    a, i, run_times[0], run_times[1], run_times[2], local_time)
-            else:
-                telegram_text = "Office365调用token失效，请及时更新token！\n调用总数： 12 \n成功个数： {} \n失败个数： {} \n调用持续时长为： {}时{}分{}秒 \n调用时间： {} (UTC) ".format(
-                    a, i, run_times[0], run_times[1], run_times[2], local_time)
-
-            telegram_address = Config.TELEGRAM_URL + Config.TELEGRAM_TOKEN + "/sendMessage?chat_id=-" + Config.TELEGRAM_CHAT_ID + "&text=" + telegram_text
-            requests.get(telegram_address)
-        else:
-            # TODO 若telegram失效则启用邮件通知
-            pass
-
-    @staticmethod
     def fix_list():
         # 随机api序列
         fixed_api = [0, 1, 5, 6, 20, 21]
@@ -70,49 +45,90 @@ class Utils:
 
         return fixed_api
 
-    # 出现失败情况时发送通知信息
     @staticmethod
-    def send_message(err_type: int, run_times, err_set: APIErrorSet):
+    def send_message(err_type: int, run_times = None, content: Union[str, APIErrorSet, Exception] = None):
+        """
+        出现失败情况时发送通知信息
+        :param err_type:
+        :param run_times:
+        :param content:
+        :return:
+        """
         logging.info("推送消息")
         telegram_token = os.getenv("TELEGRAM_TOKEN")
         telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
         telegram_url = f"{Config.TELEGRAM_URL}{telegram_token}/sendMessage"
 
-        if err_type == -1:
-            # 调用API意料之外错误
-            title = "* Token失效提醒，请及时更新Token！*"
-            telegram_address = telegram_url + "?chat_id=-" + Config.TELEGRAM_CHAT_ID + "&text=" + title
-            response = requests.get(telegram_address)
-
-        else:
-            # 调用API存在失败情况
+        local_time = time.strftime('%Y-%m-%d %H:%M:%S')
+        hours, minutes, seconds = 0, 0, 0
+        if run_times:
             hours, minutes, seconds = run_times
-            local_time = time.strftime('%Y-%m-%d %H:%M:%S')
 
-            err_url_text = "\n".join(err_set.get_err_urls())
+        response = None
+        match err_type:
+            case 1:
+                # 调用API存在失败情况
+                if not isinstance(content, APIErrorSet):
+                    raise BasicException(ErrorCode.SEND_NOTICE_ERROR, extra="传入数据类型不符")
 
-            with open("resource/tg_message_template.html") as f:
-                html_template = f.read()
+                err_url_text = "\n".join(content.get_err_urls())
 
-            html_message = html_template.format(
-                total_calls=12,
-                fail_count=err_set.count,
-                hours=hours,
-                minutes=minutes,
-                seconds=seconds,
-                local_time=local_time,
-                error_list_html=err_url_text
-            )
+                with open("resource/tg_message_template.html") as f:
+                    html_template = f.read()
+                html_message = html_template.format(
+                    total_calls=12,
+                    fail_count=content.count,
+                    hours=hours,
+                    minutes=minutes,
+                    seconds=seconds,
+                    local_time=local_time,
+                    error_list_html=err_url_text
+                )
+                payload = {
+                    "chat_id": f"{telegram_chat_id}",
+                    "text": html_message,
+                    "parse_mode": "HTML"
+                }
 
-            payload = {
-                "chat_id": f"{telegram_chat_id}",
-                "text": html_message,
-                "parse_mode": "HTML"
-            }
+                response = requests.post(telegram_url, json=payload)
 
-            response = requests.post(telegram_url, json=payload)
-            # print_debug_info = PrintDebugInfo()
-            # print_debug_info.print_request_debug(response)
+            case -1:
+                # reflesh_token 失效
+                title = "* Token失效提醒，请及时更新Token！*"
+                telegram_address = telegram_url + "?chat_id=" + Config.TELEGRAM_CHAT_ID + "&text=" + title
+                response = requests.get(telegram_address)
+
+            case _:
+                try:
+                # 默认错误处理
+                    if isinstance(content, Exception):
+                        exc_type = type(content).__name__
+                        exc_msg = str(content)
+                        trace = ''.join(traceback.format_exception(type(content), content, content.__traceback__))
+                    else:
+                        exc_type = r"/"
+                        exc_msg = str(content)
+                        trace = r"/"
+
+                    with open("resource/tg_message_error_template.html") as f:
+                        html_template = f.read()
+                    html_message = html_template.format(
+                        local_time=local_time,
+                        exc_type=exc_type,
+                        exc_msg=exc_msg,
+                        trace=trace,
+                    )
+                    payload = {
+                        "chat_id": f"{telegram_chat_id}",
+                        "text": html_message,
+                        "parse_mode": "HTML"
+                    }
+                    requests.post(telegram_url, json=payload)
+                except Exception as e:
+                    logging.error(e)
+                finally:
+                    return
+
         response.raise_for_status()
 
 
