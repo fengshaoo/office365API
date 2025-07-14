@@ -117,7 +117,6 @@ class Utils:
                         local_time=local_time,
                         exc_type=exc_type,
                         exc_msg=exc_msg,
-                        trace=trace,
                     )
                     payload = {
                         "chat_id": f"{telegram_chat_id}",
