@@ -124,7 +124,7 @@ class Utils:
                         "text": html_message,
                         "parse_mode": "HTML"
                     }
-                    requests.post(telegram_url, json=payload)
+                    response = requests.post(telegram_url, json=payload)
                     print_debug_info = PrintDebugInfo()
                     print_debug_info.print_request_debug(response)
                 except Exception as e:
