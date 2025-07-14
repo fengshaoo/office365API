@@ -105,11 +105,9 @@ class Utils:
                     if isinstance(content, Exception):
                         exc_type = type(content).__name__
                         exc_msg = str(content)
-                        trace = ''.join(traceback.format_exception(type(content), content, content.__traceback__))
                     else:
                         exc_type = r"/"
                         exc_msg = str(content)
-                        trace = r"/"
 
                     with open("resource/tg_message_error_template.html") as f:
                         html_template = f.read()
