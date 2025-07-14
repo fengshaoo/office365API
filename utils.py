@@ -128,9 +128,8 @@ class Utils:
                     print_debug_info = PrintDebugInfo()
                     print_debug_info.print_request_debug(response)
                 except Exception as e:
-                    logging.error(e)
+                    logging.error(f"默认消息推送失败：{e}")
                 finally:
-                    logging.info("消息推送成功")
                     return
 
         logging.info("消息推送成功")
