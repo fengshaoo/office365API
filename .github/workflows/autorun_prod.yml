@@ -11,6 +11,9 @@ jobs:
       TZ: Asia/Shanghai
       # PROD/DEV/DEBUG
       ENV_MODE: 'PROD'
+      # 临时强制指定 Node.js 24 运行环境，消除 checkout@v4 的 Node 20 弃用警告
+      # 官方发布v5后，将该行删除，并将actions/checkout@v4改为v5
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     if: (github.event_name == 'schedule') && (github.ref == 'refs/heads/main')
 
@@ -19,7 +22,8 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      # 将 v2 升级到 v5，兼容较新的 Node 运行环境
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
