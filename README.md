@@ -13,3 +13,6 @@
 ##### 请在阅读教程后使用[AutoAPI使用教程](https://github.com/fengshaoo/Office365Auto)
 
 ##### （￣︶￣）↗　自 2024 年 1 月 18 日 稳定运行至今 (～￣▽￣)～
+
+
+当前调用账号为api@***.onmicrosoft.com
