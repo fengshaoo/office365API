@@ -18,7 +18,8 @@
 ### 注意
 近期微软官方调整了Developer OneDrive的配额限制条款，团队云盘空间上限调由25TB整至300GB，个人账户空间上限由1TB调整至10GB。
 有网盘存储需求的请尽快进行文件迁移，防止文件丢失。
-[官方说明文档]([https://github.com/fengshaoo/Office365Auto](https://learn.microsoft.com/en-us/office/developer-program/microsoft-365-developer-program-faq))。
+
+##### 请在阅读教程后使用[官方说明文档]([https://github.com/fengshaoo/Office365Auto](https://learn.microsoft.com/en-us/office/developer-program/microsoft-365-developer-program-faq))
 
 <img width="851" height="869" alt="iShot_2026-09-06_19 08 11" src="https://github.com/user-attachments/assets/68e0a117-15ea-491a-b9fa-17e9f61f4664" />
 
